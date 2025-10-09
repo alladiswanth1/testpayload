@@ -89,7 +89,7 @@
             overflow-x: hidden;
         }
 
-        .matrix-bg {
+                .matrix-bg {
             position: fixed;
             top: 0;
             left: 0;
@@ -97,6 +97,7 @@
             height: 100%;
             pointer-events: none;
             z-index: -1;
+            opacity: 0.8;
         }
 
         .header {
@@ -163,14 +164,22 @@
             margin-bottom: 2rem;
         }
 
-        .payload-card {
+                .payload-card {
             background: rgba(0, 0, 0, 0.9);
             border: 2px solid #00ff41;
             border-radius: 10px;
             padding: 1.5rem;
             transition: all 0.3s ease;
             position: relative;
+            z-index: 1;
+            backdrop-filter: blur(3px);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
             overflow: hidden;
+        }
+
+        .payload-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 30px rgba(0, 255, 65, 0.4);
         }
 
         .payload-card::before {
@@ -217,8 +226,8 @@
             padding: 1rem;
         }
 
-        .payload-item {
-            background: rgba(0, 20, 0, 0.8);
+               .payload-item {
+            background: rgba(0, 20, 0, 0.9);
             margin: 0.5rem 0;
             padding: 0.75rem;
             border-radius: 5px;
@@ -231,8 +240,9 @@
         }
 
         .payload-item:hover {
-            background: rgba(0, 40, 0, 0.8);
+            background: rgba(0, 40, 0, 0.95);
             transform: translateX(5px);
+            box-shadow: 0 2px 10px rgba(0, 255, 65, 0.2);
         }
 
         .copy-btn {
@@ -301,6 +311,39 @@
             }
         }
     </style>
+        .matrix-bg {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    z-index: -1;
+    opacity: 0.8;
+}
+
+.payload-card {
+    position: relative;
+    z-index: 1;
+    backdrop-filter: blur(3px);
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.payload-item {
+    transition: all 0.3s ease;
+    background: rgba(0, 20, 0, 0.9);
+}
+
+.payload-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 30px rgba(0, 255, 65, 0.4);
+}
+
+.payload-item:hover {
+    background: rgba(0, 40, 0, 0.95);
+    transform: translateX(5px);
+    box-shadow: 0 2px 10px rgba(0, 255, 65, 0.2);
+}
 </head>
 <body>
     <canvas class="matrix-bg" id="matrix"></canvas>
