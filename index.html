@@ -89,7 +89,7 @@
             overflow-x: hidden;
         }
 
-                .matrix-bg {
+        .matrix-bg {
             position: fixed;
             top: 0;
             left: 0;
@@ -97,7 +97,6 @@
             height: 100%;
             pointer-events: none;
             z-index: -1;
-            opacity: 0.8;
         }
 
         .header {
@@ -164,22 +163,14 @@
             margin-bottom: 2rem;
         }
 
-                .payload-card {
+        .payload-card {
             background: rgba(0, 0, 0, 0.9);
             border: 2px solid #00ff41;
             border-radius: 10px;
             padding: 1.5rem;
             transition: all 0.3s ease;
             position: relative;
-            z-index: 1;
-            backdrop-filter: blur(3px);
-            transition: transform 0.3s ease, box-shadow 0.3s ease;
             overflow: hidden;
-        }
-
-        .payload-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 10px 30px rgba(0, 255, 65, 0.4);
         }
 
         .payload-card::before {
@@ -226,8 +217,8 @@
             padding: 1rem;
         }
 
-               .payload-item {
-            background: rgba(0, 20, 0, 0.9);
+        .payload-item {
+            background: rgba(0, 20, 0, 0.8);
             margin: 0.5rem 0;
             padding: 0.75rem;
             border-radius: 5px;
@@ -240,9 +231,8 @@
         }
 
         .payload-item:hover {
-            background: rgba(0, 40, 0, 0.95);
+            background: rgba(0, 40, 0, 0.8);
             transform: translateX(5px);
-            box-shadow: 0 2px 10px rgba(0, 255, 65, 0.2);
         }
 
         .copy-btn {
@@ -311,39 +301,6 @@
             }
         }
     </style>
-        .matrix-bg {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    pointer-events: none;
-    z-index: -1;
-    opacity: 0.8;
-}
-
-.payload-card {
-    position: relative;
-    z-index: 1;
-    backdrop-filter: blur(3px);
-    transition: transform 0.3s ease, box-shadow 0.3s ease;
-}
-
-.payload-item {
-    transition: all 0.3s ease;
-    background: rgba(0, 20, 0, 0.9);
-}
-
-.payload-card:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 10px 30px rgba(0, 255, 65, 0.4);
-}
-
-.payload-item:hover {
-    background: rgba(0, 40, 0, 0.95);
-    transform: translateX(5px);
-    box-shadow: 0 2px 10px rgba(0, 255, 65, 0.2);
-}
 </head>
 <body>
     <canvas class="matrix-bg" id="matrix"></canvas>
@@ -874,170 +831,89 @@
         <p>&copy; 2025 Bug Bounty Payloads Hub | Use Responsibly | Happy Hunting! 🎯</p>
     </footer>
 
-<script>
-    // Matrix rain effect
-    const canvas = document.getElementById('matrix');
-    const ctx = canvas.getContext('2d');
-    let animationId;
-    let isRunning = true;
+    <script>
+        // Matrix rain effect
+        const canvas = document.getElementById('matrix');
+        const ctx = canvas.getContext('2d');
 
-    function resizeCanvas() {
         canvas.width = window.innerWidth;
         canvas.height = window.innerHeight;
-        initMatrix();
-    }
 
-    // Initialize matrix configuration
-    function initMatrix() {
         const matrix = "ABCDEFGHIJKLMNOPQRSTUVWXYZ123456789@#$%^&*()*&^%+-/~{[|`]}";
         const matrixArray = matrix.split("");
-        const fontSize = 10;
-        const columns = Math.ceil(canvas.width / fontSize);
-        
-        const drops = new Array(columns).fill(1);
-        const speedVariation = new Array(columns).fill(0)
-            .map(() => Math.random() * 0.5 + 0.5); // Random speed for each column
 
-        return { matrixArray, fontSize, drops, speedVariation };
-    }
+        const font_size = 10;
+        const columns = canvas.width / font_size;
 
-    let matrix = initMatrix();
-
-    function draw() {
-        if (!isRunning) return;
-
-        // Create semi-transparent fade effect
-        ctx.fillStyle = 'rgba(0, 0, 0, 0.04)';
-        ctx.fillRect(0, 0, canvas.width, canvas.height);
-        
-        ctx.fillStyle = '#00ff41';
-        ctx.font = matrix.fontSize + 'px monospace';
-        
-        for(let i = 0; i < matrix.drops.length; i++) {
-            // Random character
-            const char = matrix.matrixArray[Math.floor(Math.random() * matrix.matrixArray.length)];
-            
-            // Apply speed variation
-            const speed = matrix.speedVariation[i];
-            const x = i * matrix.fontSize;
-            const y = matrix.drops[i] * matrix.fontSize;
-            
-            // Add slight color variation
-            const alpha = Math.random() * 0.2 + 0.8;
-            ctx.fillStyle = `rgba(0, 255, 65, ${alpha})`;
-            
-            ctx.fillText(char, x, y);
-            
-            // Reset drop when it reaches bottom with random delay
-            if(y > canvas.height) {
-                matrix.drops[i] = 0;
-                matrix.speedVariation[i] = Math.random() * 0.5 + 0.5; // New random speed
-            }
-            
-            // Move drop
-            matrix.drops[i] += speed;
+        const drops = [];
+        for(let x = 0; x < columns; x++) {
+            drops[x] = 1;
         }
-        
-        animationId = requestAnimationFrame(draw);
-    }
 
-    // Handle visibility change
-    document.addEventListener('visibilitychange', () => {
-        if (document.hidden) {
-            isRunning = false;
-            cancelAnimationFrame(animationId);
-        } else {
-            isRunning = true;
-            draw();
-        }
-    });
-
-    // Handle window resize
-    window.addEventListener('resize', () => {
-        cancelAnimationFrame(animationId);
-        resizeCanvas();
-        draw();
-    });
-
-    // Start the animation
-    resizeCanvas();
-    draw();
-
-    // Improved copy payload function with feedback
-    function copyPayload(button) {
-        const payloadText = button.parentElement.textContent.replace('📋', '').trim();
-        navigator.clipboard.writeText(payloadText)
-            .then(() => {
-                button.textContent = '✅';
-                button.style.transform = 'scale(1.2)';
-                button.style.transition = 'transform 0.2s ease';
-                
-                setTimeout(() => {
-                    button.textContent = '📋';
-                    button.style.transform = 'scale(1)';
-                }, 1000);
-            })
-            .catch(err => {
-                button.textContent = '❌';
-                console.error('Copy failed:', err);
-                
-                setTimeout(() => {
-                    button.textContent = '📋';
-                }, 1000);
-            });
-    }
-
-    // Enhanced search functionality with debounce
-    const searchInput = document.getElementById('searchInput');
-    const payloadCards = document.querySelectorAll('.payload-card');
-    let searchTimeout;
-
-    function debounce(func, wait) {
-        return function executedFunction(...args) {
-            const later = () => {
-                clearTimeout(searchTimeout);
-                func(...args);
-            };
-            clearTimeout(searchTimeout);
-            searchTimeout = setTimeout(later, wait);
-        };
-    }
-
-    const performSearch = debounce(function(searchTerm) {
-        searchTerm = searchTerm.toLowerCase();
-        
-        payloadCards.forEach(card => {
-            const cardTitle = card.querySelector('.card-title').textContent.toLowerCase();
-            const payloadItems = card.querySelectorAll('.payload-item');
-            let hasMatch = cardTitle.includes(searchTerm);
-            let visibleItems = 0;
+        function draw() {
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.04)';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
             
-            payloadItems.forEach(item => {
-                const payloadText = item.textContent.toLowerCase();
-                if (payloadText.includes(searchTerm) || searchTerm === '') {
-                    item.style.display = 'block';
-                    visibleItems++;
-                } else {
-                    item.style.display = 'none';
+            ctx.fillStyle = '#00ff41';
+            ctx.font = font_size + 'px arial';
+            
+            for(let i = 0; i < drops.length; i++) {
+                const text = matrixArray[Math.floor(Math.random() * matrixArray.length)];
+                ctx.fillText(text, i * font_size, drops[i] * font_size);
+                
+                if(drops[i] * font_size > canvas.height && Math.random() > 0.975) {
+                    drops[i] = 0;
                 }
-            });
-            
-            // Show/hide card based on matching items
-            card.style.display = (hasMatch || visibleItems > 0) ? 'block' : 'none';
-            
-            // Animate cards
-            card.style.opacity = '0';
-            setTimeout(() => {
-                card.style.transition = 'opacity 0.3s ease';
-                card.style.opacity = '1';
-            }, 50);
-        });
-    }, 300); // 300ms debounce delay
+                drops[i]++;
+            }
+        }
 
-    searchInput.addEventListener('input', function() {
-        performSearch(this.value);
-    });
-</script>
-</script>
+        setInterval(draw, 35);
+
+        // Copy payload function
+        function copyPayload(button) {
+            const payloadText = button.parentElement.textContent.replace('📋', '').trim();
+            navigator.clipboard.writeText(payloadText).then(() => {
+                button.textContent = '✅';
+                setTimeout(() => {
+                    button.textContent = '📋';
+                }, 1000);
+            });
+        }
+
+        // Search functionality
+        const searchInput = document.getElementById('searchInput');
+        const payloadCards = document.querySelectorAll('.payload-card');
+
+        searchInput.addEventListener('input', function() {
+            const searchTerm = this.value.toLowerCase();
+            
+            payloadCards.forEach(card => {
+                const cardTitle = card.querySelector('.card-title').textContent.toLowerCase();
+                const payloadItems = card.querySelectorAll('.payload-item');
+                let hasMatch = cardTitle.includes(searchTerm);
+                
+                payloadItems.forEach(item => {
+                    const payloadText = item.textContent.toLowerCase();
+                    if (payloadText.includes(searchTerm)) {
+                        hasMatch = true;
+                        item.style.display = 'block';
+                    } else if (searchTerm !== '') {
+                        item.style.display = 'none';
+                    } else {
+                        item.style.display = 'block';
+                    }
+                });
+                
+                card.style.display = hasMatch ? 'block' : 'none';
+            });
+        });
+
+        // Resize canvas on window resize
+        window.addEventListener('resize', function() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        });
+    </script>
 </body>
 </html>
