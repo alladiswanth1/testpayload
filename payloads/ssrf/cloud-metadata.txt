@@ -1,0 +1,15 @@
+# Cloud metadata endpoints — authorized testing only.
+# Prefer harmless path/status confirmation before requesting sensitive metadata.
+
+# AWS IMDS
+http://169.254.169.254/
+http://169.254.169.254/latest/
+http://169.254.169.254/latest/meta-data/
+http://[fd00:ec2::254]/
+
+# GCP metadata host (typically requires Metadata-Flavor: Google)
+http://metadata.google.internal/
+http://metadata.google.internal/computeMetadata/v1/
+
+# Azure IMDS (typically requires Metadata:true)
+http://169.254.169.254/metadata/instance?api-version=2021-02-01
