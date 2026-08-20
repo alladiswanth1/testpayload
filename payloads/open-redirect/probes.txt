@@ -1,0 +1,10 @@
+https://example.invalid/
+//example.invalid/
+///example.invalid/
+https:example.invalid
+https://target.example@example.invalid/
+https://target.example%40example.invalid/
+/\example.invalid
+/%5cexample.invalid
+//example.invalid/%2f..%2f
+https://target.example.example.invalid/

