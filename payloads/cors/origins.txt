@@ -1,0 +1,8 @@
+Origin: https://example.invalid
+Origin: null
+Origin: https://target.example.example.invalid
+Origin: https://eviltarget.example
+Origin: http://target.example
+Origin: https://sub.target.example
+Origin: https://target.example:443
+Origin: https://TARGET.EXAMPLE
