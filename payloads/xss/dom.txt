@@ -1,0 +1,15 @@
+# DOM XSS test inputs — verify only where data reaches an unsafe DOM sink.
+# location.hash / search sink probes
+#"><img src=x onerror=alert(1)>
+?<img src=x onerror=alert(1)>
+javascript:alert(1)
+data:text/html,<svg onload=alert(1)>
+
+# postMessage / window.name test values
+<img src=x onerror=alert(1)>
+<svg onload=alert(1)>
+
+# common clobbering-shaped markup
+<form id=x></form>
+<img name=currentScript src=x>
+<a id=x name=y></a>
