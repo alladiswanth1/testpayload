@@ -1,0 +1,14 @@
+# Prefer short timing / harmless output probes
+; sleep 2
+&& sleep 2
+|| sleep 2
+| sleep 2
+$(sleep 2)
+`sleep 2`
+%0asleep%202
+
+# Harmless identity/output checks for local labs
+; id
+&& whoami
+$(id)
+`whoami`
