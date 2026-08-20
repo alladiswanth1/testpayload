@@ -1,0 +1,14 @@
+# Engine-agnostic arithmetic / parser probes
+{{7*7}}
+${7*7}
+#{7*7}
+<%=7*7%>
+@(7*7)
+${{<%[%'"]]}}%\
+
+# Common engine fingerprints
+{{7*'7'}}
+{{config}}
+{{self}}
+${7*7}
+<#assign x=7*7>${x}
